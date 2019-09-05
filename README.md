@@ -1,5 +1,5 @@
 ## JRPG Engine
-My passion- and hobby project for the moment. I know creating a game takes year, so i can't guarantee I some day finish it, but I'm determined to at least make a complete game engine, which includes
+My passion- and hobby project for the moment. I know creating a game can take years, so i can't guarantee I some day finish it, but I'm determined to at least make a complete game engine, which includes
 - Sprite graphics
 - Tilemaps and tile-based movement
 - Menu
