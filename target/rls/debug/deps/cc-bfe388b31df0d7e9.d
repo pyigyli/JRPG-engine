@@ -1,0 +1,12 @@
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\cc-bfe388b31df0d7e9.rmeta: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\registry.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\winapi.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\com.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\setup_config.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\windows_registry.rs
+
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\libcc-bfe388b31df0d7e9.rlib: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\registry.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\winapi.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\com.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\setup_config.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\windows_registry.rs
+
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\cc-bfe388b31df0d7e9.d: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\registry.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\winapi.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\com.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\setup_config.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\windows_registry.rs
+
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\lib.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\registry.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\winapi.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\com.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\setup_config.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\cc-1.0.38\src\windows_registry.rs:

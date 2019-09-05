@@ -1,0 +1,13 @@
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\png-9d1b23a5c85638f9.rmeta: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\chunk.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\stream.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\encoder.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\filter.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\traits.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\common.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\utils.rs
+
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\png-9d1b23a5c85638f9.d: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\chunk.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\stream.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\encoder.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\filter.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\traits.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\common.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\utils.rs
+
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\lib.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\chunk.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\mod.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\decoder\stream.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\encoder.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\filter.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\traits.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\common.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\png-0.15.0\src\utils.rs:

@@ -1,0 +1,12 @@
+D:\VisualStudio\Rust\jrpg\target\debug\deps\lyon_path-d4a2cba8ce0bf7a6.rmeta: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\events.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path_state.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\iterator.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\builder.rs
+
+D:\VisualStudio\Rust\jrpg\target\debug\deps\liblyon_path-d4a2cba8ce0bf7a6.rlib: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\events.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path_state.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\iterator.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\builder.rs
+
+D:\VisualStudio\Rust\jrpg\target\debug\deps\lyon_path-d4a2cba8ce0bf7a6.d: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\events.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path_state.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\iterator.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\builder.rs
+
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\lib.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\events.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path_state.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\path.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\iterator.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\lyon_path-0.13.2\src\builder.rs:

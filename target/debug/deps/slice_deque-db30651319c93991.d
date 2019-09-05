@@ -1,0 +1,11 @@
+D:\VisualStudio\Rust\jrpg\target\debug\deps\slice_deque-db30651319c93991.rmeta: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\macros.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\buffer.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\winapi.rs
+
+D:\VisualStudio\Rust\jrpg\target\debug\deps\libslice_deque-db30651319c93991.rlib: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\macros.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\buffer.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\winapi.rs
+
+D:\VisualStudio\Rust\jrpg\target\debug\deps\slice_deque-db30651319c93991.d: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\macros.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\buffer.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\winapi.rs
+
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\lib.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\macros.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\mod.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\buffer.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\slice-deque-0.2.4\src\mirrored\winapi.rs:

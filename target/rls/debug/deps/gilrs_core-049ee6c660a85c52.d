@@ -1,0 +1,10 @@
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\gilrs_core-049ee6c660a85c52.rmeta: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\ff.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\gamepad.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\utils.rs
+
+d:\VisualStudio\Rust\jrpg\target\rls\debug\deps\gilrs_core-049ee6c660a85c52.d: C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\lib.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\mod.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\ff.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\gamepad.rs C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\utils.rs
+
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\lib.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\mod.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\mod.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\ff.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\platform\windows\gamepad.rs:
+C:\Users\Pyigyli\.cargo\registry\src\github.com-1ecc6299db9ec823\gilrs-core-0.2.2\src\utils.rs:
