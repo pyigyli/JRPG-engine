@@ -5,12 +5,14 @@ use crate::GameMode;
 use crate::data::font::font_param;
 use crate::party::Party;
 use crate::battle::enemy::Enemy;
+use crate::battle::action::ActionParameters;
 use crate::menu::MenuScreen;
 
 pub enum OnClickEvent {
   None,
   ToMenuScreen(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>) -> MenuScreen),
-  BattleTarget((usize, usize)),
+  ToTargetSelection(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Party, &'t0 Vec<Vec<Enemy>>, &'t1 ActionParameters) -> MenuScreen, ActionParameters),
+  ActOnTarget((usize, usize), ActionParameters),
   MutateMenu(for<'r> fn(&'r mut MenuScreen) -> GameResult<()>),
   Transition(GameMode)
 }
@@ -48,6 +50,8 @@ impl MenuItem {
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     if self.text.len() > 0 {
       font_param(&mut self.spritebatch, &self.text);
+    } else {
+      self.spritebatch.add(DrawParam::new());
     }
     let param = DrawParam::new()
       .dest(Point2::new(self.screen_pos.0, self.screen_pos.1));

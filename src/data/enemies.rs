@@ -1,6 +1,7 @@
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use rand::{Rng, thread_rng};
+use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::enemy::{Enemy, Animation};
 use crate::party::Party;
 use crate::menu::notification::Notification;
@@ -25,7 +26,8 @@ fn turn_action(ctx: &mut Context, enemy: &mut Enemy, party: &mut Party, notifica
     } else {
       target_number = party_targets[3];
     }
-    enemy.animation = (Animation::StartTurn(target_number), 60, ticks(ctx));
+    let action_parameters = ActionParameters::new(DamageType::Physical, enemy.attack, 0., false, 0., false, 0., false);
+    enemy.animation = (Animation::StartTurn(target_number, action_parameters), 60, ticks(ctx));
   } else {
     *notification = Some(Notification::new(ctx, format!("{} sits still", enemy.name)));
     enemy.animation = (Animation::EndTurn, 30, ticks(ctx));

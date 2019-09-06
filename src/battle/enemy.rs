@@ -2,12 +2,14 @@ use ggez::graphics::{spritebatch, Image, DrawParam, draw, Color};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
+use rand::{Rng, thread_rng};
+use crate::battle::action::{ActionParameters, DamageType};
 use crate::party::Party;
 use crate::party::character::{Character, Animation as CharacterAnimation};
 use crate::menu::notification::Notification;
 
 pub enum Animation {
-  StartTurn(u8), // 60 frames
+  StartTurn(u8, ActionParameters), // 60 frames
   EndTurn, // 30 frames
   Hurt, // 60 frames
   Dead // 20 frames
@@ -16,10 +18,10 @@ pub enum Animation {
 impl PartialEq for Animation {
   fn eq(&self, other: &Self) -> bool {
     match self {
-      Animation::StartTurn(_) => {match other {Animation::StartTurn(_) => true, _ => false}},
-      Animation::EndTurn      => {match other {Animation::EndTurn      => true, _ => false}},
-      Animation::Hurt         => {match other {Animation::Hurt         => true, _ => false}},
-      Animation::Dead         => {match other {Animation::Dead         => true, _ => false}}
+      Animation::StartTurn(_, _) => {match other {Animation::StartTurn(_, _) => true, _ => false}},
+      Animation::EndTurn         => {match other {Animation::EndTurn         => true, _ => false}},
+      Animation::Hurt            => {match other {Animation::Hurt            => true, _ => false}},
+      Animation::Dead            => {match other {Animation::Dead            => true, _ => false}}
     }
   }
 }
@@ -35,18 +37,22 @@ pub struct Enemy {
   pub x_offset: f32,
   pub name: String,
   level: u8,
+  max_hp: u16,
+  max_mp: u16,
   hp: u16,
   mp: u16,
-  attack: u16,
+  pub attack: u16,
   defence: u16,
-  magic: u16,
+  pub magic: u16,
   resistance: u16,
   agility: u8,
   pub experience: u32,
   atb: u8,
   atb_subtick: u8,
-  turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>,
-  pub dead: bool
+  pub dead: bool,
+  poisoned: bool,
+  sleeping: bool,
+  turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>
 }
 
 impl Enemy {
@@ -81,6 +87,8 @@ impl Enemy {
       x_offset: 0.,
       name,
       level,
+      max_hp: hp,
+      max_mp: mp,
       hp,
       mp,
       attack,
@@ -91,8 +99,10 @@ impl Enemy {
       experience,
       atb: 0,
       atb_subtick: 0,
-      turn_action,
-      dead: false
+      dead: false,
+      poisoned: false,
+      sleeping: false,
+      turn_action
     }
   }
 
@@ -123,7 +133,7 @@ impl Enemy {
     if self.animation.1 > 0 {
       self.animation.1 -= 1;
       match self.animation.0 {
-        Animation::StartTurn(_) => {
+        Animation::StartTurn(_, _) => {
           let animation_time = ticks(ctx) - self.animation.2;
           if animation_time < 10 || (animation_time > 30 && animation_time < 50) {
             self.x_offset -= 2.;
@@ -145,15 +155,15 @@ impl Enemy {
         Animation::Dead => self.opacity -= 0.05
       }
       if self.animation.1 == 0 {
-        match self.animation.0 {
-          Animation::StartTurn(target_number) => {
+        match &mut self.animation.0 {
+          Animation::StartTurn(target_number, action_parameters) => {
+            let parameters = action_parameters.clone();
             match target_number {
-              0 => self.attack_target(ctx, &mut party.first , notification)?,
-              1 => self.attack_target(ctx, &mut party.second, notification)?,
-              2 => self.attack_target(ctx, &mut party.third , notification)?,
-              _ => self.attack_target(ctx, &mut party.fourth, notification)?
+              0 => self.act_on_target(ctx, parameters, &mut party.first , notification)?,
+              1 => self.act_on_target(ctx, parameters, &mut party.second, notification)?,
+              2 => self.act_on_target(ctx, parameters, &mut party.third , notification)?,
+              _ => self.act_on_target(ctx, parameters, &mut party.fourth, notification)?
             }
-            self.animation = (Animation::EndTurn, 30, ticks(ctx));
           },
           Animation::EndTurn => {
             self.turn_active = false;
@@ -176,20 +186,45 @@ impl Enemy {
     Ok(())
   }
 
-  pub fn attack_target(&mut self, ctx: &mut Context, character: &mut Character, notification: &mut Option<Notification>) -> GameResult<()> {
-    character.animation = (CharacterAnimation::Hurt, 60, ticks(ctx));
-    character.receive_physical_damage(ctx, character.attack, notification)
+  pub fn act_on_target(
+    &mut self,
+    ctx: &mut Context,
+    action_parameters: ActionParameters,
+    character: &mut Character,
+    notification: &mut Option<Notification>
+  ) -> GameResult<()> {
+    self.animation = (Animation::EndTurn, 30, ticks(ctx));
+    match action_parameters.damage_type {
+      DamageType::Healing => {character.receive_healing()},
+      _ => {
+        character.animation = (CharacterAnimation::Hurt, 60, ticks(ctx));
+        character.receive_damage(ctx, action_parameters, notification)
+      }
+    }   
   }
 
-  pub fn receive_physical_damage(&mut self, ctx: &mut Context, attack: u16, notification: &mut Option<Notification>) -> GameResult<()> {
-    let damage = attack * 3 / self.defence;
+  pub fn receive_damage(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, notification: &mut Option<Notification>) -> GameResult<()> {
+    let damage = match action_parameters.damage_type {
+      DamageType::Physical => action_parameters.power * 3 / self.defence,
+      DamageType::Magical  => action_parameters.power * 3 / self.resistance,
+      DamageType::Pure     => action_parameters.power * 3,
+      _ => 0
+    };
     if let Some(hp) = self.hp.checked_sub(damage) {
       self.hp = hp;
     } else {
       self.hp = 0;
     }
+    let mut rng = thread_rng();
+    if rng.gen::<f32>() < action_parameters.dead_change   {self.hp = 0;}
+    if rng.gen::<f32>() < action_parameters.poison_change {self.poisoned = true;}
+    if rng.gen::<f32>() < action_parameters.sleep_change  {self.sleeping = true;}
     self.animation = (Animation::Hurt, 60, ticks(ctx));
     *notification = Some(Notification::new(ctx, format!("{} takes {} dmg", self.name, damage)));
+    Ok(())
+  }
+
+  pub fn receive_healing() -> GameResult<()> {
     Ok(())
   }
 

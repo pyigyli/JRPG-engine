@@ -6,6 +6,7 @@ use crate::menu::container::MenuContainer;
 use crate::party::Party;
 use crate::party::character::Character;
 use crate::battle::enemy::Enemy;
+use crate::battle::action::{ActionParameters, DamageType};
 use crate::menu::item::OnClickEvent;
 
 pub fn none_menu(ctx: &mut Context) -> MenuScreen {
@@ -37,11 +38,12 @@ pub fn menu_main(ctx: &mut Context) -> MenuScreen {
 }
 
 pub fn battle_main(ctx: &mut Context) -> MenuScreen {
-  fn to_target_selection(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-    battle_target_selection(ctx, party, enemies, (1, 0))
+  fn to_target_selection(ctx: &mut Context, party: &mut Party, enemies: &Vec<Vec<Enemy>>, action_parameters: &ActionParameters) -> MenuScreen {
+    battle_target_selection(ctx, party, enemies, (1, 0), action_parameters)
   }
   let commands = MenuContainer::new(ctx, 10., 480., 260., 220.);
-  let attack         = text!(ctx, "Attack", 55., 520., OnClickEvent::ToMenuScreen(to_target_selection));
+  let action_parameters = ActionParameters::new(DamageType::Physical, 4, 0., false, 0.5, false, 0.5, false);
+  let attack         = text!(ctx, "Attack", 55., 520., OnClickEvent::ToTargetSelection(to_target_selection, action_parameters));
   let first_ability  = text!(ctx, "Steal" , 55., 560., OnClickEvent::None);
   let second_ability = text!(ctx, "Flee"  , 55., 600., OnClickEvent::None);
   let item           = text!(ctx, "Item"  , 55., 640., OnClickEvent::None);
@@ -57,13 +59,19 @@ pub fn battle_main(ctx: &mut Context) -> MenuScreen {
   )
 }
 
-pub fn battle_target_selection(ctx: &mut Context, party: &mut Party, enemies: &Vec<Vec<Enemy>>, cursor_pos: (usize, usize)) -> MenuScreen {
+pub fn battle_target_selection(
+  ctx: &mut Context,
+  party: &mut Party,
+  enemies: &Vec<Vec<Enemy>>,
+  cursor_pos: (usize, usize),
+  action_parameters: &ActionParameters
+) -> MenuScreen {
   fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
     battle_main(ctx)
   }
   let characters = MenuContainer::new(ctx, 300., 480., 750., 220.);
   let commands = MenuContainer::new(ctx, 10., 480., 260., 220.);
-  let target_positions = battle_target_positions!(ctx, party, enemies);
+  let target_positions = battle_target_positions!(ctx, party, enemies, action_parameters);
   let attack         = text!(ctx, "Attack", 55., 520., OnClickEvent::None);
   let first_ability  = text!(ctx, "Steal" , 55., 560., OnClickEvent::None);
   let second_ability = text!(ctx, "Flee"  , 55., 600., OnClickEvent::None);

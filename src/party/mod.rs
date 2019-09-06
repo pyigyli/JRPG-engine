@@ -4,6 +4,7 @@ pub mod character_info;
 pub mod character;
 use character::{Character, Animation, Sprite};
 use crate::battle::Battle;
+use crate::battle::action::ActionParameters;
 use crate::menu::MenuScreen;
 use crate::menu::notification::Notification;
 use crate::data::{characters, menus};
@@ -20,8 +21,8 @@ impl Party {
     Party {
       first:  characters::darrel_deen(ctx, 1),
       second: characters::nurse_seraphine(ctx, 2),
-      third:  characters::none_character(ctx, 3),
-      fourth: characters::none_character(ctx, 4)
+      third:  characters::darrel_deen(ctx, 3),
+      fourth: characters::nurse_seraphine(ctx, 4)
     }
   }
 
@@ -57,21 +58,19 @@ impl Party {
     ctx: &mut Context,
     battle: &mut Battle,
     target_pos: (usize, usize),
-    menu: &mut MenuScreen,
+    action_parameters: &mut ActionParameters
   ) -> GameResult<()> {
-    menu.open = false;
     let mut character = self.get_active();
     character.animation = (Animation::Attack, 60, ticks(ctx));
     character.sprite = Sprite::Attack;
-    let attack_power = character.attack;
     match target_pos.0 {
       0 => match target_pos.1 {
-        0 => self.first .receive_physical_damage(ctx, attack_power, &mut battle.notification),
-        1 => self.second.receive_physical_damage(ctx, attack_power, &mut battle.notification),
-        2 => self.third .receive_physical_damage(ctx, attack_power, &mut battle.notification),
-        _ => self.fourth.receive_physical_damage(ctx, attack_power, &mut battle.notification),
+        0 => self.first .receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
+        1 => self.second.receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
+        2 => self.third .receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
+        _ => self.fourth.receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
       }
-      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_physical_damage(ctx, character.attack, &mut battle.notification)
+      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_damage(ctx, action_parameters, &mut battle.notification)
     }
   }
 

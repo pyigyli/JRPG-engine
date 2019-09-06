@@ -2,6 +2,8 @@ use ggez::graphics::{spritebatch, Image, DrawParam, Rect, draw, Color};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
+use rand::{Rng, thread_rng};
+use crate::battle::action::{ActionParameters, DamageType};
 use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
 use crate::menu::item::{MenuItem, OnClickEvent};
@@ -41,6 +43,8 @@ pub struct Character {
   pub name: String,
   level: u8,
   pub experience: u32,
+  max_hp: u16,
+  max_mp: u16,
   hp: u16,
   mp: u16,
   pub attack: u16,
@@ -52,6 +56,8 @@ pub struct Character {
   atb_subtick: u8,
   pub turn_active: bool,
   dead: bool,
+  poisoned: bool,
+  sleeping: bool,
   character_info: CharacterInfo
 }
 
@@ -72,7 +78,7 @@ impl Character {
   ) -> Character {
     let image = Image::new(ctx, spritefile).unwrap();
     let batch = spritebatch::SpriteBatch::new(image);
-    let info_name = MenuItem::new(ctx, "/empty.png".to_owned(), name.to_owned(), (300., 480. + id as f32 * 30.), OnClickEvent::None);
+    let character_info = CharacterInfo::new(ctx, id, &name, hp, mp);
     Character {
       id,
       spritebatch: batch,
@@ -84,6 +90,8 @@ impl Character {
       name,
       experience: 0,
       level,
+      max_hp: hp,
+      max_mp: mp,
       hp,
       mp,
       attack,
@@ -95,7 +103,9 @@ impl Character {
       atb_subtick: 0,
       turn_active: false,
       dead: false,
-      character_info: CharacterInfo::new()
+      poisoned: false,
+      sleeping: false,
+      character_info
     }
   }
 
@@ -189,15 +199,48 @@ impl Character {
     Ok(())
   }
 
-  pub fn receive_physical_damage(&mut self, ctx: &mut Context, attack: u16, notification: &mut Option<Notification>) -> GameResult<()> {
-    let damage = attack * 3 / self.defence;
+  pub fn receive_damage(&mut self, ctx: &mut Context, action_parameters: ActionParameters, notification: &mut Option<Notification>) -> GameResult<()> {
+    let damage = match action_parameters.damage_type {
+      DamageType::Physical => action_parameters.power * 3 / self.defence,
+      DamageType::Magical  => action_parameters.power * 3 / self.resistance,
+      DamageType::Pure     => action_parameters.power * 3,
+      _ => 0
+    };
     if let Some(hp) = self.hp.checked_sub(damage) {
       self.hp = hp;
     } else {
       self.hp = 0;
     }
+    let mut rng = thread_rng();
+    if rng.gen::<f32>() < action_parameters.dead_change {
+      self.hp = 0;
+    }
+    if rng.gen::<f32>() < action_parameters.poison_change {
+      self.poisoned = true;
+      self.character_info.status_effects.push(MenuItem::new(
+        ctx,
+        "/status_effects/poison.png".to_owned(),
+        String::new(),
+        (330. + self.character_info.status_effects.len() as f32 * 25., 480. + self.id as f32 * 60.),
+        OnClickEvent::None
+      ));
+    }
+    if rng.gen::<f32>() < action_parameters.sleep_change  {
+      self.sleeping = true;
+      self.character_info.status_effects.push(MenuItem::new(
+        ctx,
+        "/status_effects/sleep.png".to_owned(),
+        String::new(),
+        (330. + self.character_info.status_effects.len() as f32 * 25., 480. + self.id as f32 * 60.),
+        OnClickEvent::None
+      ));
+    }
     self.animation = (Animation::Hurt, 60, ticks(ctx));
     *notification = Some(Notification::new(ctx, format!("{} takes {} dmg", self.name, damage)));
+    Ok(())
+  }
+
+  pub fn receive_healing(&mut self) -> GameResult<()> {
     Ok(())
   }
 
@@ -224,6 +267,7 @@ impl Character {
         .dest(Point2::new(200. + self.x_offset, 150. + party_pos * 65.));
       draw(ctx, &self.spritebatch, param)?;
       self.spritebatch.clear();
+      self.character_info.draw(ctx)?;
     }
     Ok(())
   }
