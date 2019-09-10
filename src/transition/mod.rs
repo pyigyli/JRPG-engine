@@ -94,7 +94,7 @@ impl Transition {
         draw(ctx, &mesh, DrawParam::new().dest(Point2::new(0., 0.)))?;
       },
       TransitionStyle::BlackInFast(_) | TransitionStyle::BlackOutFast => {
-        let rectangle = Rect::new(0., 0., WINDOW_SIZE.0, WINDOW_SIZE.1);
+        let rectangle = Rect::new(-WINDOW_SIZE.0, -WINDOW_SIZE.1, WINDOW_SIZE.0 * 2., WINDOW_SIZE.1 * 2.);
         let color = Color::new(0., 0., 0., self.opacity);
         let mesh = Mesh::new_rectangle(ctx, DrawMode::fill(), rectangle, color).unwrap();
         draw(ctx, &mesh, DrawParam::new())?;

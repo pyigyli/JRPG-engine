@@ -10,7 +10,7 @@ use crate::battle::action::{ActionParameters, DamageType};
 use crate::menu::item::OnClickEvent;
 
 pub fn none_menu(ctx: &mut Context) -> MenuScreen {
-  MenuScreen::new(ctx, false, vec![], vec![vec![]], vec![], (0, 0), false, OnClickEvent::None)
+  MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), false, OnClickEvent::None)
 }
 
 pub fn menu_main(ctx: &mut Context) -> MenuScreen {
@@ -30,7 +30,7 @@ pub fn menu_main(ctx: &mut Context) -> MenuScreen {
     vec![
       vec![item, ability, equip, config]
     ],
-    vec![],
+    Vec::new(),
     (0, 0),
     true,
     OnClickEvent::ToMenuScreen(to_none_menu)
@@ -52,7 +52,7 @@ pub fn battle_main(ctx: &mut Context) -> MenuScreen {
     true,
     vec![commands],
     vec![vec![attack, first_ability, second_ability, item]],
-    vec![],
+    Vec::new(),
     (0, 0),
     true,
     OnClickEvent::None
@@ -120,8 +120,8 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
   let container = MenuContainer::new(ctx, 10., 10., 1060., 700.);
   let continue_button     = text!(ctx, " ", 0., 0., OnClickEvent::MutateMenu(start_exp_count));
   let gained_exp          = text!(ctx, format!("{}", experience), 100., 100., OnClickEvent::None);
-  let first_character_exp = text!(ctx, format!("{}", party.first.experience), 100., 125., OnClickEvent::None);
-  party.first.experience += *experience;
+  let first_character_exp = text!(ctx, format!("{}", party.first.state.experience), 100., 125., OnClickEvent::None);
+  party.first.state.experience += *experience;
   MenuScreen::new(
     ctx,
     true,

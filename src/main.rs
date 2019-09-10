@@ -44,7 +44,7 @@ impl GameState {
   pub fn new(ctx: &mut Context) -> GameState {
     let mut party = Party::new(ctx);
     let mut menu = data::menus::none_menu(ctx);
-    let battle = Battle::new(ctx, vec![vec![]], &mut party, &mut menu);
+    let battle = Battle::new(ctx, vec![Vec::new()], &mut party, &mut menu);
     GameState {
       mode: GameMode::Map,
       menu,

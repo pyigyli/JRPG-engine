@@ -25,7 +25,7 @@ impl CharacterInfo {
       hp: info_hp,
       mp: info_mp,
       atb: 0,
-      status_effects: vec![]
+      status_effects: Vec::new()
     }
   }
 

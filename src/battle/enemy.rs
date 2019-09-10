@@ -2,8 +2,9 @@ use ggez::graphics::{spritebatch, Image, DrawParam, draw, Color};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
-use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
+use crate::battle::print_damage::PrintDamage;
+use crate::battle::state::BattleState;
 use crate::party::Party;
 use crate::party::character::{Character, Animation as CharacterAnimation};
 use crate::menu::notification::Notification;
@@ -27,7 +28,6 @@ impl PartialEq for Animation {
 }
 
 pub struct Enemy {
-  id: u8,
   spritebatch: spritebatch::SpriteBatch,
   pub screen_pos: (f32, f32),
   pub selection_pos: (usize, usize),
@@ -36,22 +36,8 @@ pub struct Enemy {
   pub animation: (Animation, usize, usize),
   pub x_offset: f32,
   pub name: String,
-  level: u8,
-  max_hp: u16,
-  max_mp: u16,
-  hp: u16,
-  mp: u16,
-  pub attack: u16,
-  defence: u16,
-  pub magic: u16,
-  resistance: u16,
-  agility: u8,
-  pub experience: u32,
-  atb: u8,
-  atb_subtick: u8,
+  pub state: BattleState,
   pub dead: bool,
-  poisoned: bool,
-  sleeping: bool,
   turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>
 }
 
@@ -77,7 +63,6 @@ impl Enemy {
     let image = Image::new(ctx, spritefile).unwrap();
     let batch = spritebatch::SpriteBatch::new(image);
     Enemy {
-      id,
       spritebatch: batch,
       screen_pos,
       selection_pos,
@@ -86,22 +71,8 @@ impl Enemy {
       animation: (Animation::EndTurn, 0, 0),
       x_offset: 0.,
       name,
-      level,
-      max_hp: hp,
-      max_mp: mp,
-      hp,
-      mp,
-      attack,
-      defence,
-      magic,
-      resistance,
-      agility,
-      experience,
-      atb: 0,
-      atb_subtick: 0,
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience),
       dead: false,
-      poisoned: false,
-      sleeping: false,
       turn_action
     }
   }
@@ -112,23 +83,14 @@ impl Enemy {
     party: &mut Party,
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
-    notification: &mut Option<Notification>
+    notification: &mut Option<Notification>,
+    print_damage: &mut Option<PrintDamage>
   ) -> GameResult<()> {
-    if *current_turn == 0 && !self.dead {
-      self.atb_subtick += 1;
-      if self.atb_subtick % 5 == 0 {
-        self.atb_subtick = 0;
-        if let Some(sum) = self.atb.checked_add(self.agility) {
-          self.atb = sum;
-        } else {
-          active_turns.push(self.id);
-          self.atb = 0;
-        }
-      }
-    } else if *current_turn == self.id && !self.turn_active {
+    self.state.atb_update(current_turn, active_turns)?;
+    if *current_turn == self.state.id && !self.turn_active {
+      self.turn_active = true;
       let turn_action = self.turn_action;
       turn_action(ctx, self, party, notification)?;
-      self.turn_active = true;
     }
     if self.animation.1 > 0 {
       self.animation.1 -= 1;
@@ -157,12 +119,12 @@ impl Enemy {
       if self.animation.1 == 0 {
         match &mut self.animation.0 {
           Animation::StartTurn(target_number, action_parameters) => {
-            let parameters = action_parameters.clone();
+            let mut parameters = action_parameters.clone();
             match target_number {
-              0 => self.act_on_target(ctx, parameters, &mut party.first , notification)?,
-              1 => self.act_on_target(ctx, parameters, &mut party.second, notification)?,
-              2 => self.act_on_target(ctx, parameters, &mut party.third , notification)?,
-              _ => self.act_on_target(ctx, parameters, &mut party.fourth, notification)?
+              0 => self.act_on_target(ctx, &mut parameters, &mut party.first , print_damage)?,
+              1 => self.act_on_target(ctx, &mut parameters, &mut party.second, print_damage)?,
+              2 => self.act_on_target(ctx, &mut parameters, &mut party.third , print_damage)?,
+              _ => self.act_on_target(ctx, &mut parameters, &mut party.fourth, print_damage)?
             }
           },
           Animation::EndTurn => {
@@ -171,9 +133,8 @@ impl Enemy {
           },
           Animation::Hurt => {
             self.opacity = 1.;
-            if self.hp == 0 {
+            if self.state.hp == 0 {
               self.animation = (Animation::Dead, 20, ticks(ctx));
-              *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
             }
           },
           Animation::Dead => {
@@ -189,43 +150,29 @@ impl Enemy {
   pub fn act_on_target(
     &mut self,
     ctx: &mut Context,
-    action_parameters: ActionParameters,
+    action_parameters: &mut ActionParameters,
     character: &mut Character,
-    notification: &mut Option<Notification>
+    print_damage: &mut Option<PrintDamage>
   ) -> GameResult<()> {
     self.animation = (Animation::EndTurn, 30, ticks(ctx));
     match action_parameters.damage_type {
-      DamageType::Healing => {character.receive_healing()},
+      DamageType::Healing => {character.receive_battle_action(ctx, action_parameters, print_damage)},
       _ => {
         character.animation = (CharacterAnimation::Hurt, 60, ticks(ctx));
-        character.receive_damage(ctx, action_parameters, notification)
+        character.receive_battle_action(ctx, action_parameters, print_damage)
       }
     }   
   }
 
-  pub fn receive_damage(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, notification: &mut Option<Notification>) -> GameResult<()> {
-    let damage = match action_parameters.damage_type {
-      DamageType::Physical => action_parameters.power * 3 / self.defence,
-      DamageType::Magical  => action_parameters.power * 3 / self.resistance,
-      DamageType::Pure     => action_parameters.power * 3,
-      _ => 0
-    };
-    if let Some(hp) = self.hp.checked_sub(damage) {
-      self.hp = hp;
-    } else {
-      self.hp = 0;
+  pub fn receive_battle_action(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, print_damage: &mut Option<PrintDamage>) -> GameResult<()> {
+    match action_parameters.damage_type {
+      DamageType::None    => Ok(()),
+      DamageType::Healing => self.state.receive_healing(),
+      _ => {
+        self.animation = (Animation::Hurt, 60, ticks(ctx));
+        self.state.receive_damage(ctx, action_parameters, print_damage, (700. + self.x_offset + self.screen_pos.0 * 70., 200. + self.screen_pos.1 * 65.))
+      }
     }
-    let mut rng = thread_rng();
-    if rng.gen::<f32>() < action_parameters.dead_change   {self.hp = 0;}
-    if rng.gen::<f32>() < action_parameters.poison_change {self.poisoned = true;}
-    if rng.gen::<f32>() < action_parameters.sleep_change  {self.sleeping = true;}
-    self.animation = (Animation::Hurt, 60, ticks(ctx));
-    *notification = Some(Notification::new(ctx, format!("{} takes {} dmg", self.name, damage)));
-    Ok(())
-  }
-
-  pub fn receive_healing() -> GameResult<()> {
-    Ok(())
   }
 
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

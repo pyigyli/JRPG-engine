@@ -1,4 +1,4 @@
-use ggez::graphics::{spritebatch, DrawParam, Rect};
+use ggez::graphics::{spritebatch, DrawParam, Rect, Color};
 use ggez::nalgebra::Point2;
 
 pub fn font_param(spritebatch: &mut spritebatch::SpriteBatch, text: &String) -> () {
@@ -106,6 +106,29 @@ pub fn font_param(spritebatch: &mut spritebatch::SpriteBatch, text: &String) -> 
         }
       )
       .dest(Point2::new(index as f32 * 24., 0.));
+    spritebatch.add(p);
+  }
+}
+
+pub fn number_param(spritebatch: &mut spritebatch::SpriteBatch, number: String, opacity: f32) -> () {
+  for (index, character) in number.chars().enumerate() {
+    let p = DrawParam::new()
+      .src(
+        match character {
+          '0' => Rect::new(0. , 0., 0.1, 1.),
+          '1' => Rect::new(0.1, 0., 0.1, 1.),
+          '2' => Rect::new(0.2, 0., 0.1, 1.),
+          '3' => Rect::new(0.3, 0., 0.1, 1.),
+          '4' => Rect::new(0.4, 0., 0.1, 1.),
+          '5' => Rect::new(0.5, 0., 0.1, 1.),
+          '6' => Rect::new(0.6, 0., 0.1, 1.),
+          '7' => Rect::new(0.7, 0., 0.1, 1.),
+          '8' => Rect::new(0.8, 0., 0.1, 1.),
+           _  => Rect::new(0.9, 0., 0.1, 1.)
+        }
+      )
+      .dest(Point2::new(index as f32 * 16., 0.))
+      .color(Color::new(1., 1., 1., opacity));
     spritebatch.add(p);
   }
 }

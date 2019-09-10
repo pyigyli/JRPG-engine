@@ -63,7 +63,7 @@ impl MenuScreen {
         self.input_cooldowns.a = true;
         match &mut self.selectable_items[self.cursor_pos.0][self.cursor_pos.1].on_click {
           OnClickEvent::ToMenuScreen(new_menu)                                 => *self = new_menu(ctx, mode, party, &battle.enemies),
-          OnClickEvent::ToTargetSelection(target_selection, action_parameters) => *self = target_selection(ctx, party, &battle.enemies, action_parameters),
+          OnClickEvent::ToTargetSelection(target_selection, action_parameters) => *self = target_selection(ctx, party, &mut battle.enemies, action_parameters),
           OnClickEvent::ActOnTarget(target, action_parameters) => {
             self.open = false;
             party.battle_turn_action(ctx, battle, *target, action_parameters)?;

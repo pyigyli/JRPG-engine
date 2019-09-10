@@ -2,11 +2,11 @@ use ggez::graphics::{spritebatch, Image, DrawParam, Rect, draw, Color};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
-use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
+use crate::battle::state::BattleState;
+use crate::battle::print_damage::PrintDamage;
 use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
-use crate::menu::item::{MenuItem, OnClickEvent};
 use crate::menu::notification::Notification;
 use crate::data;
 
@@ -33,7 +33,6 @@ pub enum Sprite {
 }
 
 pub struct Character {
-  pub id: u8,
   spritebatch: spritebatch::SpriteBatch,
   opacity: f32,
   pub animation: (Animation, usize, usize), // (Animation, length, starting tick)
@@ -41,23 +40,7 @@ pub struct Character {
   frame: f32,
   pub x_offset: f32,
   pub name: String,
-  level: u8,
-  pub experience: u32,
-  max_hp: u16,
-  max_mp: u16,
-  hp: u16,
-  mp: u16,
-  pub attack: u16,
-  defence: u16,
-  magic: u16,
-  resistance: u16,
-  agility: u8,
-  atb: u8,
-  atb_subtick: u8,
-  pub turn_active: bool,
-  dead: bool,
-  poisoned: bool,
-  sleeping: bool,
+  pub state: BattleState,
   character_info: CharacterInfo
 }
 
@@ -80,7 +63,6 @@ impl Character {
     let batch = spritebatch::SpriteBatch::new(image);
     let character_info = CharacterInfo::new(ctx, id, &name, hp, mp);
     Character {
-      id,
       spritebatch: batch,
       opacity: 1.,
       animation: (Animation::EndTurn, 0, 0),
@@ -88,23 +70,7 @@ impl Character {
       frame: 0.,
       x_offset: 0.,
       name,
-      experience: 0,
-      level,
-      max_hp: hp,
-      max_mp: mp,
-      hp,
-      mp,
-      attack,
-      defence,
-      magic,
-      resistance,
-      agility,
-      atb: 0,
-      atb_subtick: 0,
-      turn_active: false,
-      dead: false,
-      poisoned: false,
-      sleeping: false,
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0),
       character_info
     }
   }
@@ -118,22 +84,9 @@ impl Character {
     notification: &mut Option<Notification>
   ) -> GameResult<()> {
     if self.name.len() > 0 {
-      if self.dead {
-        self.atb = 0;
-        self.atb_subtick = 0;
-      } else if *current_turn == 0 {
-        self.atb_subtick += 1;
-        if self.atb_subtick % 5 == 0 {
-          self.atb_subtick = 0;
-          if let Some(sum) = self.atb.checked_add(self.agility) {
-            self.atb = sum;
-          } else {
-            active_turns.push(self.id);
-            self.atb = 0;
-          }
-        }
-      } else if *current_turn == self.id && !self.turn_active {
-        self.turn_active = true;
+      self.state.atb_update(current_turn, active_turns)?;
+      if *current_turn == self.state.id && !self.state.turn_active {
+        self.state.turn_active = true;
         self.sprite = Sprite::StandRight;
         self.sprite = Sprite::WalkRight;
         self.animation = (Animation::StartTurn, 12, ticks(ctx));
@@ -171,7 +124,7 @@ impl Character {
             },
             Animation::EndTurn => {
               self.sprite = Sprite::StandRight;
-              self.turn_active = false;
+              self.state.turn_active = false;
               *current_turn = 0;
             },
             Animation::Attack => {
@@ -180,18 +133,15 @@ impl Character {
             },
             Animation::Hurt => {
               self.opacity = 1.;
-              if self.hp == 0 {
+              if self.state.hp == 0 {
                 self.animation = (Animation::Dead, 20, ticks(ctx));
                 *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
-              } else if self.turn_active {
+              } else if self.state.turn_active {
                 self.animation = (Animation::EndTurn, 12, ticks(ctx));
                 self.sprite = Sprite::WalkLeft;
               }
             },
-            Animation::Dead => {
-              self.sprite = Sprite::Dead;
-              self.dead = true;
-            }
+            Animation::Dead => self.sprite = Sprite::Dead
           }
         }
       }
@@ -199,52 +149,19 @@ impl Character {
     Ok(())
   }
 
-  pub fn receive_damage(&mut self, ctx: &mut Context, action_parameters: ActionParameters, notification: &mut Option<Notification>) -> GameResult<()> {
-    let damage = match action_parameters.damage_type {
-      DamageType::Physical => action_parameters.power * 3 / self.defence,
-      DamageType::Magical  => action_parameters.power * 3 / self.resistance,
-      DamageType::Pure     => action_parameters.power * 3,
-      _ => 0
-    };
-    if let Some(hp) = self.hp.checked_sub(damage) {
-      self.hp = hp;
-    } else {
-      self.hp = 0;
+  pub fn receive_battle_action(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, print_damage: &mut Option<PrintDamage>) -> GameResult<()> {
+    match action_parameters.damage_type {
+      DamageType::None    => (),
+      DamageType::Healing => self.state.receive_healing()?,
+      _ => {
+        self.state.receive_damage(ctx, action_parameters, print_damage, (200. + self.x_offset, 85. + self.state.id as f32 * 65.))?;
+        self.animation = (Animation::Hurt, 60, ticks(ctx));
+      }
     }
-    let mut rng = thread_rng();
-    if rng.gen::<f32>() < action_parameters.dead_change {
-      self.hp = 0;
-    }
-    if rng.gen::<f32>() < action_parameters.poison_change {
-      self.poisoned = true;
-      self.character_info.status_effects.push(MenuItem::new(
-        ctx,
-        "/status_effects/poison.png".to_owned(),
-        String::new(),
-        (330. + self.character_info.status_effects.len() as f32 * 25., 480. + self.id as f32 * 60.),
-        OnClickEvent::None
-      ));
-    }
-    if rng.gen::<f32>() < action_parameters.sleep_change  {
-      self.sleeping = true;
-      self.character_info.status_effects.push(MenuItem::new(
-        ctx,
-        "/status_effects/sleep.png".to_owned(),
-        String::new(),
-        (330. + self.character_info.status_effects.len() as f32 * 25., 480. + self.id as f32 * 60.),
-        OnClickEvent::None
-      ));
-    }
-    self.animation = (Animation::Hurt, 60, ticks(ctx));
-    *notification = Some(Notification::new(ctx, format!("{} takes {} dmg", self.name, damage)));
     Ok(())
   }
 
-  pub fn receive_healing(&mut self) -> GameResult<()> {
-    Ok(())
-  }
-
-  pub fn draw(&mut self, ctx: &mut Context, party_pos: f32) -> GameResult<()> {
+  pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     if self.name.len() > 0 {
       let (spritesheet_x, spritesheet_y, anim_loop_len) = match self.sprite {
         Sprite::StandLeft  => (0., 1., 1.),
@@ -264,7 +181,7 @@ impl Character {
         .color(Color::new(1., 1., 1., self.opacity));
       self.spritebatch.add(p);
       let param = DrawParam::new()
-        .dest(Point2::new(200. + self.x_offset, 150. + party_pos * 65.));
+        .dest(Point2::new(200. + self.x_offset, 85. + self.state.id as f32 * 65.));
       draw(ctx, &self.spritebatch, param)?;
       self.spritebatch.clear();
       self.character_info.draw(ctx)?;

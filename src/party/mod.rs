@@ -65,29 +65,29 @@ impl Party {
     character.sprite = Sprite::Attack;
     match target_pos.0 {
       0 => match target_pos.1 {
-        0 => self.first .receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
-        1 => self.second.receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
-        2 => self.third .receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
-        _ => self.fourth.receive_damage(ctx, action_parameters.clone(), &mut battle.notification),
+        0 => self.first .receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
+        1 => self.second.receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
+        2 => self.third .receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
+        _ => self.fourth.receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
       }
-      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_damage(ctx, action_parameters, &mut battle.notification)
+      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, action_parameters, &mut battle.print_damage)
     }
   }
 
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-    self.first .draw(ctx, 0.)?;
-    self.second.draw(ctx, 1.)?;
-    self.third .draw(ctx, 2.)?;
-    self.fourth.draw(ctx, 3.)?;
+    self.first .draw(ctx)?;
+    self.second.draw(ctx)?;
+    self.third .draw(ctx)?;
+    self.fourth.draw(ctx)?;
     Ok(())
   }
 
   pub fn get_active(&mut self) -> &mut Character {
-    if self.first.turn_active {
+    if self.first.state.turn_active {
       return &mut self.first;
-    } else if self.second.turn_active {
+    } else if self.second.state.turn_active {
       return &mut self.second;
-    } else if self.third.turn_active {
+    } else if self.third.state.turn_active {
       return &mut self.third;
     }
     &mut self.fourth
