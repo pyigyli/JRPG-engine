@@ -11,10 +11,10 @@ fn turn_action(ctx: &mut Context, enemy: &mut Enemy, party: &mut Party, notifica
   if rng.gen::<f32>() < 0.75 {
     *notification = Some(Notification::new(ctx, format!("{} attacks", enemy.name)));
     let mut party_targets = Vec::new();
-    if party.first .name.len() > 0 {party_targets.push(0)}
-    if party.second.name.len() > 0 {party_targets.push(1)}
-    if party.third .name.len() > 0 {party_targets.push(2)}
-    if party.fourth.name.len() > 0 {party_targets.push(3)}
+    if party.first .name.len() > 0 && party.first .state.hp > 0 {party_targets.push(0)}
+    if party.second.name.len() > 0 && party.second.state.hp > 0 {party_targets.push(1)}
+    if party.third .name.len() > 0 && party.third .state.hp > 0 {party_targets.push(2)}
+    if party.fourth.name.len() > 0 && party.fourth.state.hp > 0 {party_targets.push(3)}
     let target_number;
     let target_rng = rng.gen::<f32>();
     if target_rng <= 1. / party_targets.len() as f32 {
@@ -36,13 +36,13 @@ fn turn_action(ctx: &mut Context, enemy: &mut Enemy, party: &mut Party, notifica
 }
 
 pub fn test_triangle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-triangle.png".to_owned(), screen_pos, selection_pos, "Triangle".to_owned(),  3, 16, 5, 6, 2, 2, 2, 2, 15, turn_action)
+  Enemy::new(ctx, id, "/enemies/test-triangle.png".to_owned(), screen_pos, selection_pos, "Triangle".to_owned(),  3, 16, 5, 6, 2, 2, 2, 2, 15, 0, 0, turn_action)
 }
 
 pub fn test_circle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-circle.png".to_owned()  , screen_pos, selection_pos, "Circle".to_owned(),    2, 12, 6, 4, 1, 1, 2, 3, 7, turn_action)
+  Enemy::new(ctx, id, "/enemies/test-circle.png".to_owned()  , screen_pos, selection_pos, "Circle".to_owned(),    2, 12, 6, 4, 1, 1, 2, 3, 7, 0, 0, turn_action)
 }
 
 pub fn test_square(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-square.png".to_owned()  , screen_pos, selection_pos, "Square".to_owned(),    2, 12, 6, 4, 2, 2, 2, 3, 8, turn_action)
+  Enemy::new(ctx, id, "/enemies/test-square.png".to_owned()  , screen_pos, selection_pos, "Square".to_owned(),    2, 12, 6, 4, 2, 2, 2, 3, 8, 0, 0, turn_action)
 }

@@ -21,8 +21,8 @@ impl Party {
     Party {
       first:  characters::darrel_deen(ctx, 1),
       second: characters::nurse_seraphine(ctx, 2),
-      third:  characters::darrel_deen(ctx, 3),
-      fourth: characters::nurse_seraphine(ctx, 4)
+      third:  characters::none_character(ctx, 3),
+      fourth: characters::none_character(ctx, 4)
     }
   }
 
@@ -80,6 +80,15 @@ impl Party {
     self.third .draw(ctx)?;
     self.fourth.draw(ctx)?;
     Ok(())
+  }
+
+  pub fn get_size(&mut self) -> u32 {
+    let mut party_size = 0;
+    if self.first .name.len() > 0 {party_size += 1;}
+    if self.second.name.len() > 0 {party_size += 1;}
+    if self.third .name.len() > 0 {party_size += 1;}
+    if self.fourth.name.len() > 0 {party_size += 1;}
+    party_size
   }
 
   pub fn get_active(&mut self) -> &mut Character {

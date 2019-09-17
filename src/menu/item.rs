@@ -13,7 +13,7 @@ pub enum OnClickEvent {
   ToMenuScreen(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>) -> MenuScreen),
   ToTargetSelection(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Party, &'t0 Vec<Vec<Enemy>>, &'t1 ActionParameters) -> MenuScreen, ActionParameters),
   ActOnTarget((usize, usize), ActionParameters),
-  MutateMenu(for<'r> fn(&'r mut MenuScreen) -> GameResult<()>),
+  MutateMenu(for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>),
   Transition(GameMode)
 }
 

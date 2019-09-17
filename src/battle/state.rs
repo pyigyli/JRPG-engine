@@ -2,6 +2,7 @@ use ggez::{Context, GameResult};
 use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::print_damage::PrintDamage;
+use crate::party::character_info::CharacterInfo;
 
 pub struct BattleState {
   pub id: u8,
@@ -19,8 +20,9 @@ pub struct BattleState {
   atb: u8,
   atb_subtick: u8,
   pub turn_active: bool,
-  poisoned: bool,
-  sleeping: bool
+  poisoned: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
+  sleeping: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
+  character_info: Option<CharacterInfo>
 }
 
 impl BattleState {
@@ -34,7 +36,10 @@ impl BattleState {
     magic: u16,
     resistance: u16,
     agility: u8,
-    experience: u32
+    experience: u32,
+    poisoned: i8,
+    sleeping: i8,
+    character_info: Option<CharacterInfo>
   ) -> BattleState {
     BattleState {
       id,
@@ -52,8 +57,9 @@ impl BattleState {
       atb: 0,
       atb_subtick: 0,
       turn_active: false,
-      poisoned: false,
-      sleeping: false
+      poisoned,
+      sleeping,
+      character_info
     }
   }
 
@@ -71,6 +77,32 @@ impl BattleState {
           active_turns.push(self.id);
           self.atb = 0;
         }
+      }
+    }
+    Ok(())
+  }
+
+  pub fn end_turn(&mut self) -> GameResult<()> {
+    if self.poisoned > 0 && self.poisoned != 126 {
+      self.poisoned -= 1;
+      if let Some(info) = &mut self.character_info {
+        if self.poisoned == 0 {info.remove_effect("poison".to_owned())?;}
+      }
+    } else if self.poisoned < 0 && self.poisoned != -125 {
+      self.poisoned += 1;
+      if let Some(info) = &mut self.character_info {
+        if self.poisoned == 0 {info.remove_effect("poison".to_owned())?;}
+      }
+    }
+    if self.sleeping > 0 && self.sleeping != 126 {
+      self.sleeping -= 1;
+      if let Some(info) = &mut self.character_info {
+        if self.sleeping == 0 {info.remove_effect("poison".to_owned())?;}
+      }
+    } else if self.sleeping < 0 && self.sleeping != -125 {
+      self.sleeping += 1;
+      if let Some(info) = &mut self.character_info {
+        if self.sleeping == 0 {info.remove_effect("poison".to_owned())?;}
       }
     }
     Ok(())
@@ -95,16 +127,40 @@ impl BattleState {
       self.hp = 0;
     }
     let mut rng = thread_rng();
-    if rng.gen::<f32>() < action_parameters.dead_change {
+    if rng.gen::<f32>() < action_parameters.dead_change   {
       self.hp = 0;
+      if let Some(info) = &mut self.character_info {
+        info.hp.text = format!("{}", 0);
+      }
     }
-    if rng.gen::<f32>() < action_parameters.poison_change {self.poisoned = true;}
-    if rng.gen::<f32>() < action_parameters.sleep_change  {self.sleeping = true;}
+    if self.poisoned >= 0 && rng.gen::<f32>() < action_parameters.poison_change {
+      if let Some(info) = &mut self.character_info {
+        if self.poisoned == 0 {
+          info.set_effect(ctx, self.id, "poison".to_owned())?;
+        }
+      }
+      self.poisoned = 5;
+    }
+    if self.sleeping >= 0 && rng.gen::<f32>() < action_parameters.sleep_change {
+      if let Some(info) = &mut self.character_info {
+        if self.sleeping == 0 {
+          info.set_effect(ctx, self.id, "sleep".to_owned())?;
+        }
+      }
+      self.sleeping = 3;
+    }
     *print_damage = Some(PrintDamage::new(ctx, damage, screen_pos));
     Ok(())
   }
 
   pub fn receive_healing(&mut self) -> GameResult<()> {
+    Ok(())
+  }
+
+  pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+    if let Some(character_info) = &mut self.character_info {
+      character_info.draw(ctx)?;
+    }
     Ok(())
   }
 }

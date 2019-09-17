@@ -5,10 +5,10 @@ pub struct CharacterInfo {
   name: MenuItem,
   max_hp: MenuItem,
   max_mp: MenuItem,
-  hp: MenuItem,
-  mp: MenuItem,
-  atb: u8,
-  pub status_effects: Vec<MenuItem>
+  pub hp: MenuItem,
+  pub mp: MenuItem,
+  pub atb: u8,
+  pub status_effects: Vec<(String, MenuItem)>
 }
 
 impl CharacterInfo {
@@ -29,6 +29,35 @@ impl CharacterInfo {
     }
   }
 
+  pub fn set_effect(&mut self, ctx: &mut Context, id: u8, effect_name: String) -> GameResult<()> {
+    let path = format!("/status_effects/{}.png", effect_name);
+    self.status_effects.push((effect_name, MenuItem::new(
+      ctx,
+      path,
+      "".to_owned(),
+      (330. + self.status_effects.len() as f32 * 25., 475. + id as f32 * 60.),
+      OnClickEvent::None
+    )));
+    Ok(())
+  }
+
+  pub fn remove_effect(&mut self, effect_name: String) -> GameResult<()> {
+    let mut index = 0;
+    for (i, effect) in self.status_effects.iter_mut().enumerate() {
+      if effect.0 == effect_name {
+        index = i;
+        break;
+      }
+    }
+    self.status_effects.remove(index);
+    for (i, effect) in self.status_effects.iter_mut().enumerate() {
+      if i >= index {
+        effect.1.screen_pos.0 -= 25.;
+      }
+    }
+    Ok(())
+  }
+
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     self.name.draw(ctx)?;
     self.max_hp.draw(ctx)?;
@@ -36,7 +65,7 @@ impl CharacterInfo {
     self.hp.draw(ctx)?;
     self.mp.draw(ctx)?;
     for effect in &mut self.status_effects {
-      effect.draw(ctx)?;
+      effect.1.draw(ctx)?;
     }
     Ok(())
   }

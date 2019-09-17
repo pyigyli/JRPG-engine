@@ -40,8 +40,7 @@ pub struct Character {
   frame: f32,
   pub x_offset: f32,
   pub name: String,
-  pub state: BattleState,
-  character_info: CharacterInfo
+  pub state: BattleState
 }
 
 impl Character {
@@ -70,8 +69,7 @@ impl Character {
       frame: 0.,
       x_offset: 0.,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0),
-      character_info
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0, 0, 0, Some(character_info))
     }
   }
 
@@ -126,6 +124,11 @@ impl Character {
               self.sprite = Sprite::StandRight;
               self.state.turn_active = false;
               *current_turn = 0;
+              self.state.end_turn()?;
+              if self.state.hp == 0 {
+                self.animation = (Animation::Dead, 20, ticks(ctx));
+                *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
+              }
             },
             Animation::Attack => {
               self.animation = (Animation::EndTurn, 12, ticks(ctx));
@@ -133,12 +136,12 @@ impl Character {
             },
             Animation::Hurt => {
               self.opacity = 1.;
-              if self.state.hp == 0 {
-                self.animation = (Animation::Dead, 20, ticks(ctx));
-                *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
-              } else if self.state.turn_active {
+              if self.state.turn_active {
                 self.animation = (Animation::EndTurn, 12, ticks(ctx));
                 self.sprite = Sprite::WalkLeft;
+              } else if self.state.hp == 0 {
+                self.animation = (Animation::Dead, 20, ticks(ctx));
+                *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
               }
             },
             Animation::Dead => self.sprite = Sprite::Dead
@@ -184,7 +187,7 @@ impl Character {
         .dest(Point2::new(200. + self.x_offset, 85. + self.state.id as f32 * 65.));
       draw(ctx, &self.spritebatch, param)?;
       self.spritebatch.clear();
-      self.character_info.draw(ctx)?;
+      self.state.draw(ctx)?;
     }
     Ok(())
   }

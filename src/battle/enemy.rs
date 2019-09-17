@@ -58,6 +58,8 @@ impl Enemy {
     resistance: u16,
     agility: u8,
     experience: u32,
+    poisoned: i8,
+    sleeping: i8,
     turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>,
   ) -> Enemy {
     let image = Image::new(ctx, spritefile).unwrap();
@@ -71,7 +73,7 @@ impl Enemy {
       animation: (Animation::EndTurn, 0, 0),
       x_offset: 0.,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience),
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, poisoned, sleeping, None),
       dead: false,
       turn_action
     }
@@ -97,7 +99,7 @@ impl Enemy {
       match self.animation.0 {
         Animation::StartTurn(_, _) => {
           let animation_time = ticks(ctx) - self.animation.2;
-          if animation_time < 10 || (animation_time > 30 && animation_time < 50) {
+          if animation_time <= 10 || (animation_time > 30 && animation_time < 50) {
             self.x_offset -= 2.;
           } else {
             self.x_offset += 2.;
@@ -129,7 +131,8 @@ impl Enemy {
           },
           Animation::EndTurn => {
             self.turn_active = false;
-            *current_turn = 0
+            *current_turn = 0;
+            self.state.end_turn()?;
           },
           Animation::Hurt => {
             self.opacity = 1.;

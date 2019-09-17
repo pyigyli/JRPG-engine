@@ -26,7 +26,7 @@ pub struct MenuScreen {
   columns_first: bool,
   input_cooldowns: InputCooldowns,
   return_action: OnClickEvent,
-  pub mutation: Option<for<'r> fn(&'r mut MenuScreen) -> GameResult<()>>
+  pub mutation: Option<for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>>
 }
 
 impl MenuScreen {
@@ -119,7 +119,7 @@ impl MenuScreen {
         self.input_cooldowns.right = false;
       }
       if let Some(mutate) = self.mutation {
-        mutate(self)?;
+        mutate(self, party)?;
       }
     }
     Ok(())

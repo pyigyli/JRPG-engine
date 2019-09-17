@@ -44,9 +44,10 @@ impl GameState {
   pub fn new(ctx: &mut Context) -> GameState {
     let mut party = Party::new(ctx);
     let mut menu = data::menus::none_menu(ctx);
-    let battle = Battle::new(ctx, vec![Vec::new()], &mut party, &mut menu);
+    let enemy = data::enemies::test_circle(ctx, 5, (0., 0.), (0, 0));
+    let battle = Battle::new(ctx, vec![vec![enemy]], &mut party, &mut menu);
     GameState {
-      mode: GameMode::Map,
+      mode: GameMode::Battle,
       menu,
       map: data::tilemaps::test_room(ctx),
       party,
