@@ -12,12 +12,13 @@ pub mod state;
 use crate::party::Party;
 use crate::party::character::Sprite;
 use crate::menu::notification::Notification;
+use crate::transition::Transition;
 
 pub struct Battle {
   party_info_container: MenuContainer,
   pub enemies: Vec<Vec<Enemy>>,
   active_turns: Vec<u8>,
-  pub current_turn: u8, // 0 = Noone's turn, 1..4 party member's turn, 5 >= enemy's turn
+  pub current_turn: u8, // 0 = Noone's turn, 1-4 party member's turn, 5 >= enemy's turn
   pub notification: Option<Notification>,
   pub print_damage: Option<PrintDamage>,
   experience_gained: u32,
@@ -27,12 +28,12 @@ pub struct Battle {
 impl Battle {
   pub fn new(ctx: &mut Context, enemies: Vec<Vec<Enemy>>, party: &mut Party, menu: &mut MenuScreen) -> Battle {
     menu.open = false;
-    party.first.sprite  = Sprite::StandRight;
-    party.second.sprite = Sprite::StandRight;
-    party.third.sprite  = Sprite::StandRight;
-    party.fourth.sprite = Sprite::StandRight;
+    if party.first .state.hp > 0 {party.first.sprite  = Sprite::StandRight;}
+    if party.second.state.hp > 0 {party.second.sprite = Sprite::StandRight;}
+    if party.third .state.hp > 0 {party.third.sprite  = Sprite::StandRight;}
+    if party.fourth.state.hp > 0 {party.fourth.sprite = Sprite::StandRight;}
     Battle {
-      party_info_container: MenuContainer::new(ctx, 300., 480., 750., 220.),
+      party_info_container: MenuContainer::new(ctx, 300., 400., 770., 300.),
       enemies,
       active_turns: Vec::new(),
       current_turn: 0,
@@ -49,11 +50,13 @@ impl Battle {
     mode: &mut GameMode,
     party: &mut Party,
     menu: &mut MenuScreen,
+    battle_menu: &mut MenuScreen,
+    transition: &mut Transition
   ) -> GameResult<()> {
     if *mode == GameMode::Battle {
       if self.battle_over.0 {
         if ticks(ctx) - self.battle_over.1 > 60 {
-          party.won_battle(ctx, menu, self.battle_over.1, &mut self.experience_gained)?;
+          party.won_battle(ctx, menu, self.battle_over.1, &mut self.experience_gained, transition)?;
         }
       } else {
         if self.current_turn == 0 {
@@ -61,7 +64,8 @@ impl Battle {
             self.current_turn = next_turn;
           }
         }
-        party.update(ctx, menu, &mut self.active_turns, &mut self.current_turn, &mut self.notification)?;
+        party.update(ctx, battle_menu, &mut self.active_turns, &mut self.current_turn, &mut self.notification)?;
+        battle_menu.update(ctx, mode, party, self, transition)?;
       }
       let mut dead_enemies = Vec::new();
       for (i, enemy_column) in self.enemies.iter_mut().enumerate() {
@@ -113,12 +117,16 @@ impl Battle {
     Ok(())
   }
 
-  pub fn draw(&mut self, ctx: &mut Context, party: &mut Party) -> GameResult<()> {
+  pub fn draw(&mut self, ctx: &mut Context, party: &mut Party, battle_menu: &mut MenuScreen) -> GameResult<()> {
     self.party_info_container.draw(ctx)?;
     party.draw(ctx)?;
-    for enemy in self.enemies.iter_mut().flatten() {
-      enemy.draw(ctx)?;
+    for enemy_column in self.enemies.iter_mut() {
+      let column_length = enemy_column.len();
+      for enemy in enemy_column.iter_mut() {
+        enemy.draw(ctx, column_length)?;
+      }
     }
+    battle_menu.draw(ctx)?;
     if let Some(notification) = &mut self.notification {
       notification.draw(ctx)?;
     }

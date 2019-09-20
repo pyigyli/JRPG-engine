@@ -6,7 +6,7 @@ use crate::menu::container::MenuContainer;
 use crate::party::Party;
 use crate::party::character::Character;
 use crate::battle::enemy::Enemy;
-use crate::battle::action::{ActionParameters, DamageType};
+use crate::battle::action::ActionParameters;
 use crate::menu::item::OnClickEvent;
 
 pub fn none_menu(ctx: &mut Context) -> MenuScreen {
@@ -14,9 +14,6 @@ pub fn none_menu(ctx: &mut Context) -> MenuScreen {
 }
 
 pub fn menu_main(ctx: &mut Context) -> MenuScreen {
-  fn to_none_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-    none_menu(ctx)
-  }
   let submenu_selection = MenuContainer::new(ctx, 10. , 10., 250., 300.);
   let character_info    = MenuContainer::new(ctx, 275., 10., 795., 700.);
   let item    = text!(ctx, "Item"   , 55., 60. , OnClickEvent::None);
@@ -33,25 +30,27 @@ pub fn menu_main(ctx: &mut Context) -> MenuScreen {
     Vec::new(),
     (0, 0),
     true,
-    OnClickEvent::ToMenuScreen(to_none_menu)
+    OnClickEvent::Transition(GameMode::Map)
   )
 }
 
-pub fn battle_main(ctx: &mut Context) -> MenuScreen {
-  fn to_target_selection(ctx: &mut Context, party: &mut Party, enemies: &Vec<Vec<Enemy>>, action_parameters: &ActionParameters) -> MenuScreen {
-    battle_target_selection(ctx, party, enemies, (1, 0), action_parameters)
-  }
-  let commands = MenuContainer::new(ctx, 10., 480., 260., 220.);
-  let action_parameters = ActionParameters::new(DamageType::Physical, 4, 0., false, 0.9, false, 0.9, false);
-  let attack         = text!(ctx, "Attack", 55., 520., OnClickEvent::ToTargetSelection(to_target_selection, action_parameters));
-  let first_ability  = text!(ctx, "Steal" , 55., 560., OnClickEvent::None);
-  let second_ability = text!(ctx, "Flee"  , 55., 600., OnClickEvent::None);
-  let item           = text!(ctx, "Item"  , 55., 640., OnClickEvent::None);
+pub fn to_target_selection(ctx: &mut Context, party: &mut Party, enemies: &Vec<Vec<Enemy>>, action_parameters: &ActionParameters) -> MenuScreen {
+  battle_target_selection(ctx, party, enemies, (1, 0), action_parameters)
+}
+
+pub fn battle_main(ctx: &mut Context, character: &mut Character) -> MenuScreen {
+  let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
+  let attack_ability    = character.get_attack_ability(ctx);
+  let primary_ability   = character.get_primary_ability(ctx);
+  let secondary_ability = character.get_secondary_ability(ctx);
+  let item       = text!(ctx, "Item"  , 55., 560., OnClickEvent::None);
+  let defend     = text!(ctx, "Defend", 55., 600., OnClickEvent::None);
+  let row_change = text!(ctx, "Change", 55., 640., OnClickEvent::None);
   MenuScreen::new(
     ctx,
     true,
     vec![commands],
-    vec![vec![attack, first_ability, second_ability, item]],
+    vec![vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change]],
     Vec::new(),
     (0, 0),
     true,
@@ -66,21 +65,23 @@ pub fn battle_target_selection(
   cursor_pos: (usize, usize),
   action_parameters: &ActionParameters
 ) -> MenuScreen {
-  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-    battle_main(ctx)
+  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+    battle_main(ctx, party.get_active())
   }
-  let commands       = MenuContainer::new(ctx, 10., 480., 260., 220.);
+  let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
   let target_positions = battle_target_positions!(ctx, party, enemies, action_parameters);
-  let attack         = text!(ctx, "Attack", 55., 520., OnClickEvent::None);
-  let first_ability  = text!(ctx, "Steal" , 55., 560., OnClickEvent::None);
-  let second_ability = text!(ctx, "Flee"  , 55., 600., OnClickEvent::None);
-  let item           = text!(ctx, "Item"  , 55., 640., OnClickEvent::None);
+  let attack_ability    = party.get_active().get_attack_ability(ctx);
+  let primary_ability   = party.get_active().get_primary_ability(ctx);
+  let secondary_ability = party.get_active().get_secondary_ability(ctx);
+  let item       = text!(ctx, "Item"  , 55., 560., OnClickEvent::None);
+  let defend     = text!(ctx, "Defend", 55., 600., OnClickEvent::None);
+  let row_change = text!(ctx, "Change", 55., 640., OnClickEvent::None);
   MenuScreen::new(
     ctx,
     true,
     vec![commands],
     target_positions,
-    vec![attack, first_ability, second_ability, item],
+    vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change],
     cursor_pos,
     true,
     OnClickEvent::ToMenuScreen(to_battle_main)
@@ -92,12 +93,20 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
     fn count_experience(menu: &mut MenuScreen, party: &mut Party) -> GameResult<()> {
       let exp_left = menu.unselectable_items[1].text.parse::<u32>().unwrap();
       if exp_left > 0 {
-        menu.unselectable_items[1].text = format!("{}", exp_left - party.get_size());
-        if party.first .name.len() > 0 {menu.unselectable_items[3].text = format!("{}", menu.unselectable_items[3].text.parse::<u32>().unwrap() + 1);}
-        if party.second.name.len() > 0 {menu.unselectable_items[5].text = format!("{}", menu.unselectable_items[5].text.parse::<u32>().unwrap() + 1);}
-        if party.third .name.len() > 0 {menu.unselectable_items[7].text = format!("{}", menu.unselectable_items[7].text.parse::<u32>().unwrap() + 1);}
-        if party.fourth.name.len() > 0 {menu.unselectable_items[9].text = format!("{}", menu.unselectable_items[9].text.parse::<u32>().unwrap() + 1);}
-          menu.selectable_items[0][0].on_click = OnClickEvent::MutateMenu(finish_exp_count);
+        menu.unselectable_items[1].text = format!("{}", exp_left - party.get_alive_size());
+        if party.first .name.len() > 0 && party.first.state.hp > 0 {
+          menu.unselectable_items[3].text = format!("{}", menu.unselectable_items[3].text.parse::<u32>().unwrap() + 1);
+        }
+        if party.second.name.len() > 0 && party.second.state.hp > 0 {
+          menu.unselectable_items[5].text = format!("{}", menu.unselectable_items[5].text.parse::<u32>().unwrap() + 1);
+        }
+        if party.third .name.len() > 0 && party.third.state.hp > 0 {
+          menu.unselectable_items[7].text = format!("{}", menu.unselectable_items[7].text.parse::<u32>().unwrap() + 1);
+        }
+        if party.fourth.name.len() > 0 && party.fourth.state.hp > 0 {
+          menu.unselectable_items[9].text = format!("{}", menu.unselectable_items[9].text.parse::<u32>().unwrap() + 1);
+        }
+        menu.selectable_items[0][0].on_click = OnClickEvent::MutateMenu(finish_exp_count);
       } else {
         finish_exp_count(menu, party)?;
       }
@@ -128,7 +137,7 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
   let items_container        = MenuContainer::new(ctx, 10. , 480., 1060., 120.);
   let continue_container     = MenuContainer::new(ctx, 760., 610., 280. , 100.);
   let gained_exp_string      = text!(ctx, "Experience", 90. , 50. , OnClickEvent::None);
-  while *experience % party.get_size() > 0 {
+  while *experience % party.get_alive_size() > 0 {
     *experience += 1;
   }
   let gained_exp = text!(ctx, format!("{}", experience), 350., 50. , OnClickEvent::None);
@@ -166,10 +175,10 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
   }, 840., 260., OnClickEvent::None);
   let gained_items_string = text!(ctx, "Items", 90. , 410., OnClickEvent::None);
   let continue_button = text!(ctx, "Continue", 805., 650., OnClickEvent::MutateMenu(start_exp_count));
-  if party.first .name.len() > 0 {party.first .state.experience += *experience / party.get_size();}
-  if party.second.name.len() > 0 {party.second.state.experience += *experience / party.get_size();}
-  if party.third .name.len() > 0 {party.third .state.experience += *experience / party.get_size();}
-  if party.fourth.name.len() > 0 {party.fourth.state.experience += *experience / party.get_size();}
+  if party.first .name.len() > 0 {party.first .state.experience += *experience / party.get_alive_size();}
+  if party.second.name.len() > 0 {party.second.state.experience += *experience / party.get_alive_size();}
+  if party.third .name.len() > 0 {party.third .state.experience += *experience / party.get_alive_size();}
+  if party.fourth.name.len() > 0 {party.fourth.state.experience += *experience / party.get_alive_size();}
   MenuScreen::new(
     ctx,
     true,

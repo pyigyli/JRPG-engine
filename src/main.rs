@@ -7,6 +7,7 @@ use std::time::Duration;
 use std::path;
 mod globals;
 mod menu;
+use menu::MenuScreen;
 mod tilemap;
 mod data;
 mod battle;
@@ -33,10 +34,11 @@ impl PartialEq for GameMode {
 
 struct GameState {
   mode: GameMode,
-  menu: menu::MenuScreen,
+  menu: MenuScreen,
   map: tilemap::Tilemap,
   party: Party,
   battle: Battle,
+  battle_menu: MenuScreen,
   transition: Transition
 }
 
@@ -52,6 +54,7 @@ impl GameState {
       map: data::tilemaps::test_room(ctx),
       party,
       battle,
+      battle_menu: data::menus::none_menu(ctx),
       transition: Transition::new(),
     }
   }
@@ -60,11 +63,11 @@ impl GameState {
 impl EventHandler for GameState {
   fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
     if self.transition.style == TransitionStyle::None {
-      self.battle.update(ctx, &mut self.mode, &mut self.party, &mut self.menu)?;
-      self.map.update(ctx, &mut self.mode, &mut self.party, &mut self.battle, &mut self.transition, &mut self.menu)?;
+      self.battle.update(ctx, &mut self.mode, &mut self.party, &mut self.menu, &mut self.battle_menu, &mut self.transition)?;
+      self.map.update(ctx, &mut self.mode, &mut self.party, &mut self.battle, &mut self.menu, &mut self.transition)?;
       self.menu.update(ctx, &mut self.mode, &mut self.party, &mut self.battle, &mut self.transition)?;
     } else {
-      self.transition.update(&mut self.mode)?;
+      self.transition.update(ctx, &mut self.mode, &mut self.menu, &mut self.party, &self.battle.enemies)?;
     }
     Ok(())
   }
@@ -72,17 +75,9 @@ impl EventHandler for GameState {
   fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     graphics::clear(ctx, graphics::BLACK);
     match self.mode {
-      GameMode::Battle => {
-        self.battle.draw(ctx, &mut self.party)?;
-        self.menu.draw(ctx)?;
-      },
-      GameMode::Map => {
-        self.map.draw(ctx)?;
-      },
-      GameMode::Menu => {
-        self.map.draw(ctx)?;
-        self.menu.draw(ctx)?;
-      }
+      GameMode::Battle => self.battle.draw(ctx, &mut self.party, &mut self.battle_menu)?,
+      GameMode::Map    => self.map.draw(ctx)?,
+      GameMode::Menu   => self.menu.draw(ctx)?
     }
     if self.transition.style != TransitionStyle::None {
       self.transition.draw(ctx)?;

@@ -13,11 +13,19 @@ pub struct CharacterInfo {
 
 impl CharacterInfo {
   pub fn new(ctx: &mut Context, id: u8, name: &String, hp: u16, mp: u16) -> CharacterInfo {
-    let info_name = MenuItem::new(ctx, "/empty.png".to_owned(), name.to_owned()   , (330., 450. + id as f32 * 60.), OnClickEvent::None);
-    let info_hp   = MenuItem::new(ctx, "/empty.png".to_owned(), format!("{}/", hp), (600., 450. + id as f32 * 60.), OnClickEvent::None);
-    let info_mp   = MenuItem::new(ctx, "/empty.png".to_owned(), format!("{}/", mp), (800., 450. + id as f32 * 60.), OnClickEvent::None);
-    let max_hp    = MenuItem::new(ctx, "/empty.png".to_owned(), format!("{}", hp) , (700., 450. + id as f32 * 60.), OnClickEvent::None);
-    let max_mp    = MenuItem::new(ctx, "/empty.png".to_owned(), format!("{}", mp) , (900., 450. + id as f32 * 60.), OnClickEvent::None);
+    let info_name = MenuItem::new(ctx, "/empty.png".to_owned(), name.to_owned(), (330., 370. + id as f32 * 62.), OnClickEvent::None);
+    let info_hp = MenuItem::new(
+      ctx, "/empty.png".to_owned(), format!("{}/", hp), (610. + (5 - format!("{}/", hp).len()) as f32 * 24., 370. + id as f32 * 62.), OnClickEvent::None
+    );
+    let info_mp = MenuItem::new(
+      ctx, "/empty.png".to_owned(), format!("{}/", mp), (874. + (4 - format!("{}/", mp).len()) as f32 * 24., 370. + id as f32 * 62.), OnClickEvent::None
+    );
+    let max_hp  = MenuItem::new(
+      ctx, "/empty.png".to_owned(), format!("{}" , hp), (730. + (4 - format!("{}" , hp).len()) as f32 * 24., 370. + id as f32 * 62.), OnClickEvent::None
+    );
+    let max_mp  = MenuItem::new(
+      ctx, "/empty.png".to_owned(), format!("{}" , mp), (970. + (3 - format!("{}" , mp).len()) as f32 * 24., 370. + id as f32 * 62.), OnClickEvent::None
+    );
     CharacterInfo {
       name: info_name,
       max_hp,
@@ -35,7 +43,7 @@ impl CharacterInfo {
       ctx,
       path,
       "".to_owned(),
-      (330. + self.status_effects.len() as f32 * 25., 475. + id as f32 * 60.),
+      (330. + self.status_effects.len() as f32 * 25., 397. + id as f32 * 62.),
       OnClickEvent::None
     )));
     Ok(())

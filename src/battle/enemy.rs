@@ -31,6 +31,7 @@ pub struct Enemy {
   spritebatch: spritebatch::SpriteBatch,
   pub screen_pos: (f32, f32),
   pub selection_pos: (usize, usize),
+  pub size: f32,
   turn_active: bool,
   opacity: f32,
   pub animation: (Animation, usize, usize),
@@ -48,6 +49,7 @@ impl Enemy {
     spritefile: String,
     screen_pos: (f32, f32),
     selection_pos: (usize, usize),
+    size: f32,
     name: String,
     level: u8,
     hp: u16,
@@ -68,6 +70,7 @@ impl Enemy {
       spritebatch: batch,
       screen_pos,
       selection_pos,
+      size,
       turn_active: false,
       opacity: 1.,
       animation: (Animation::EndTurn, 0, 0),
@@ -167,18 +170,26 @@ impl Enemy {
     }   
   }
 
-  pub fn receive_battle_action(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, print_damage: &mut Option<PrintDamage>) -> GameResult<()> {
+  pub fn receive_battle_action(
+    &mut self,
+    ctx: &mut Context,
+    action_parameters: &mut ActionParameters,
+    print_damage: &mut Option<PrintDamage>,
+    column_length: usize
+  ) -> GameResult<()> {
     match action_parameters.damage_type {
       DamageType::None    => Ok(()),
       DamageType::Healing => self.state.receive_healing(),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
-        self.state.receive_damage(ctx, action_parameters, print_damage, (700. + self.x_offset + self.screen_pos.0 * 70., 200. + self.screen_pos.1 * 65.))
+        self.state.receive_damage(ctx, action_parameters, print_damage, (
+          700. + self.x_offset + self.screen_pos.0 * 70., 280. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
+        ))
       }
     }
   }
 
-  pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+  pub fn draw(&mut self, ctx: &mut Context, column_length: usize) -> GameResult<()> {
     self.spritebatch.add(
       match self.animation.0 {
         Animation::Hurt | Animation::Dead => DrawParam::new().color(Color::new(1., 1., 1., self.opacity)),
@@ -186,7 +197,7 @@ impl Enemy {
       }
     );
     let param = DrawParam::new()
-      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., 200. + self.screen_pos.1 * 65.));
+      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., 300. - column_length as f32 * 33. - self.size * 66. + self.screen_pos.1 * 66.));
     draw(ctx, &self.spritebatch, param)?;
     self.spritebatch.clear();
     Ok(())

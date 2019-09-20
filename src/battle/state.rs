@@ -126,6 +126,9 @@ impl BattleState {
     } else {
       self.hp = 0;
     }
+    if let Some(info) = &mut self.character_info {
+      info.hp.text = format!("{}/", self.hp);
+    }
     let mut rng = thread_rng();
     if rng.gen::<f32>() < action_parameters.dead_change   {
       self.hp = 0;

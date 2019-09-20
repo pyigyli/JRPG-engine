@@ -3,7 +3,6 @@ use ggez::nalgebra::Point2;
 use ggez::event::KeyCode;
 use ggez::input::keyboard;
 use ggez::{Context, GameResult};
-use crate::data::menus;
 pub mod item;
 use item::{MenuItem, OnClickEvent};
 pub mod container;
@@ -14,7 +13,9 @@ pub mod notification;
 use crate::GameMode;
 use crate::party::Party;
 use crate::battle::Battle;
+use crate::battle::enemy::Enemy;
 use crate::transition::{Transition, TransitionStyle};
+use crate::data::menus;
 
 pub struct MenuScreen {
   pub open: bool,
@@ -56,8 +57,10 @@ impl MenuScreen {
 
   pub fn update(&mut self, ctx: &mut Context, mode: &mut GameMode, party: &mut Party, battle: &mut Battle, transition: &mut Transition) -> GameResult<()> {
     if *mode == GameMode::Map && keyboard::is_key_pressed(ctx, KeyCode::F) {
-      *self = menus::menu_main(ctx);
-      *mode = GameMode::Menu;
+      fn to_main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+        menus::menu_main(ctx)
+      }
+      transition.set(TransitionStyle::MenuIn(to_main_menu))?;
     } else if self.open {
       if keyboard::is_key_pressed(ctx, KeyCode::A) && !self.input_cooldowns.a {
         self.input_cooldowns.a = true;
@@ -68,8 +71,9 @@ impl MenuScreen {
             self.open = false;
             party.battle_turn_action(ctx, battle, *target, action_parameters)?;
           },
-          OnClickEvent::MutateMenu(mutation) => self.mutation = Some(*mutation),
-          OnClickEvent::Transition(new_mode) => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::MutateMenu(mutation)     => self.mutation = Some(*mutation),
+          OnClickEvent::Transition(new_mode)     => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::MenuTransition(new_menu) => transition.set(TransitionStyle::MenuIn(*new_menu))?,
           OnClickEvent::None => ()
         }
       } else if !keyboard::is_key_pressed(ctx, KeyCode::A) {
@@ -77,10 +81,9 @@ impl MenuScreen {
       }
       if keyboard::is_key_pressed(ctx, KeyCode::S) && !self.input_cooldowns.s {
         self.input_cooldowns.s = true;
-        match self.return_action {
-          OnClickEvent::ToMenuScreen(new_menu) => {
-            *self = new_menu(ctx, mode, party, &battle.enemies);
-          },
+        match &self.return_action {
+          OnClickEvent::ToMenuScreen(new_menu) => *self = new_menu(ctx, mode, party, &battle.enemies),
+          OnClickEvent::Transition(new_mode)   => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
           _ => ()
         };
       } else if !keyboard::is_key_pressed(ctx, KeyCode::S) {

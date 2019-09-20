@@ -1,11 +1,21 @@
 use ggez::graphics::{DrawParam, DrawMode, Rect, Color, Mesh, draw};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
+use crate::battle::enemy::Enemy;
+use crate::menu::MenuScreen;
+use crate::party::Party;
 use crate::globals::WINDOW_SIZE;
 use crate::GameMode;
+use crate::data::menus;
 
 pub enum TransitionStyle {
-  None, WhiteInFast(GameMode), WhiteOutFast, BlackInFast(GameMode), BlackOutFast
+  None,
+  WhiteInFast(GameMode),
+  WhiteOutFast,
+  BlackInFast(GameMode),
+  BlackOutFast,
+  MenuIn(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>) -> MenuScreen),
+  MenuOut
 }
 
 impl PartialEq for TransitionStyle {
@@ -15,7 +25,9 @@ impl PartialEq for TransitionStyle {
       TransitionStyle::WhiteInFast(_) => {match other {TransitionStyle::WhiteInFast(_) => true, _ => false}},
       TransitionStyle::WhiteOutFast   => {match other {TransitionStyle::WhiteOutFast   => true, _ => false}},
       TransitionStyle::BlackInFast(_) => {match other {TransitionStyle::BlackInFast(_) => true, _ => false}},
-      TransitionStyle::BlackOutFast   => {match other {TransitionStyle::BlackOutFast   => true, _ => false}}
+      TransitionStyle::BlackOutFast   => {match other {TransitionStyle::BlackOutFast   => true, _ => false}},
+      TransitionStyle::MenuIn(_)      => {match other {TransitionStyle::MenuIn(_)      => true, _ => false}},
+      TransitionStyle::MenuOut        => {match other {TransitionStyle::MenuOut        => true, _ => false}}
     }
   }
 }
@@ -39,7 +51,14 @@ impl Transition {
     Ok(())
   }
 
-  pub fn update(&mut self, mode: &mut GameMode) -> GameResult<()> {
+  pub fn update(
+    &mut self,
+    ctx: &mut Context,
+    mode: &mut GameMode,
+    menu: &mut MenuScreen,
+    party: &mut Party,
+    enemies: &Vec<Vec<Enemy>>
+  ) -> GameResult<()> {
     let mut done = false;
     match &self.style {
       TransitionStyle::None => (),
@@ -72,13 +91,36 @@ impl Transition {
         if self.opacity < 0. {
           done = true;
         }
+      },
+      TransitionStyle::MenuIn(get_menu) => {
+        self.opacity += 0.1;
+        self.opacity *= 0.95;
+        if self.opacity > 1. {
+          *menu = get_menu(ctx, mode, party, enemies);
+          *mode = GameMode::Menu;
+          done = true;
+        }
+      },
+      TransitionStyle::MenuOut => {
+        self.opacity -= 0.05;
+        self.opacity *= 0.9;
+        if self.opacity < 0. {
+          done = true;
+        }
       }
     }
     if done {
       self.style = match &self.style {
         TransitionStyle::WhiteInFast(_) => TransitionStyle::WhiteOutFast,
         TransitionStyle::BlackInFast(_) => TransitionStyle::BlackOutFast,
-        _ => TransitionStyle::None
+        TransitionStyle::MenuIn(_)      => TransitionStyle::MenuOut,
+        _ => {
+          match mode {
+            GameMode::Map => *menu = menus::none_menu(ctx),
+            _ => ()
+          }
+          TransitionStyle::None
+        }
       }
     }
     Ok(())
@@ -93,7 +135,8 @@ impl Transition {
         let mesh = Mesh::new_rectangle(ctx, DrawMode::fill(), rectangle, color).unwrap();
         draw(ctx, &mesh, DrawParam::new().dest(Point2::new(0., 0.)))?;
       },
-      TransitionStyle::BlackInFast(_) | TransitionStyle::BlackOutFast => {
+      TransitionStyle::BlackInFast(_) | TransitionStyle::BlackOutFast |
+      TransitionStyle::MenuIn(_)      | TransitionStyle::MenuOut      => {
         let rectangle = Rect::new(-WINDOW_SIZE.0, -WINDOW_SIZE.1, WINDOW_SIZE.0 * 2., WINDOW_SIZE.1 * 2.);
         let color = Color::new(0., 0., 0., self.opacity);
         let mesh = Mesh::new_rectangle(ctx, DrawMode::fill(), rectangle, color).unwrap();

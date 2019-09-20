@@ -7,6 +7,8 @@ use crate::battle::Battle;
 use crate::battle::action::ActionParameters;
 use crate::menu::MenuScreen;
 use crate::menu::notification::Notification;
+use crate::GameMode;
+use crate::transition::{Transition, TransitionStyle};
 use crate::data::{characters, menus};
 
 pub struct Party {
@@ -29,26 +31,34 @@ impl Party {
   pub fn update(
     &mut self,
     ctx: &mut Context,
-    menu: &mut MenuScreen,
+    battle_menu: &mut MenuScreen,
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
     notification: &mut Option<Notification>
   ) -> GameResult<()> {
-    self.first .update(ctx, menu, active_turns, current_turn, notification)?;
-    self.second.update(ctx, menu, active_turns, current_turn, notification)?;
-    self.third .update(ctx, menu, active_turns, current_turn, notification)?;
-    self.fourth.update(ctx, menu, active_turns, current_turn, notification)?;
+    self.first .update(ctx, battle_menu, active_turns, current_turn, notification)?;
+    self.second.update(ctx, battle_menu, active_turns, current_turn, notification)?;
+    self.third .update(ctx, battle_menu, active_turns, current_turn, notification)?;
+    self.fourth.update(ctx, battle_menu, active_turns, current_turn, notification)?;
     Ok(())
   }
 
-  pub fn won_battle(&mut self, ctx: &mut Context, menu: &mut MenuScreen, ending_tick: usize, experience: &mut u32) -> GameResult<()> {
+  pub fn won_battle(
+    &mut self,
+    ctx: &mut Context,
+    menu: &mut MenuScreen,
+    ending_tick: usize,
+    experience: &mut u32,
+    transition: &mut Transition
+  ) -> GameResult<()> {
     if ticks(ctx) - ending_tick < 120 {
-      self.first .sprite = Sprite::Victory;
-      self.second.sprite = Sprite::Victory;
-      self.third .sprite = Sprite::Victory;
-      self.fourth.sprite = Sprite::Victory;
+      if self.first .state.hp > 0 {self.first. sprite = Sprite::Victory}
+      if self.second.state.hp > 0 {self.second.sprite = Sprite::Victory}
+      if self.third .state.hp > 0 {self.third .sprite = Sprite::Victory}
+      if self.fourth.state.hp > 0 {self.fourth.sprite = Sprite::Victory}
     } else if ticks(ctx) - ending_tick == 120 {
       *menu = menus::battle_won(ctx, self, experience);
+      transition.set(TransitionStyle::BlackInFast(GameMode::Menu))?;
     }
     Ok(())
   }
@@ -70,7 +80,10 @@ impl Party {
         2 => self.third .receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
         _ => self.fourth.receive_battle_action(ctx, action_parameters, &mut battle.print_damage),
       }
-      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, action_parameters, &mut battle.print_damage)
+      _ => {
+        let column_length = battle.enemies[target_pos.0 - 1].len();
+        battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, action_parameters, &mut battle.print_damage, column_length)
+      }
     }
   }
 
@@ -82,12 +95,12 @@ impl Party {
     Ok(())
   }
 
-  pub fn get_size(&mut self) -> u32 {
+  pub fn get_alive_size(&mut self) -> u32 {
     let mut party_size = 0;
-    if self.first .name.len() > 0 {party_size += 1;}
-    if self.second.name.len() > 0 {party_size += 1;}
-    if self.third .name.len() > 0 {party_size += 1;}
-    if self.fourth.name.len() > 0 {party_size += 1;}
+    if self.first .name.len() > 0 && self.first .state.hp > 0 {party_size += 1;}
+    if self.second.name.len() > 0 && self.second.state.hp > 0 {party_size += 1;}
+    if self.third .name.len() > 0 && self.third .state.hp > 0 {party_size += 1;}
+    if self.fourth.name.len() > 0 && self.fourth.state.hp > 0 {party_size += 1;}
     party_size
   }
 

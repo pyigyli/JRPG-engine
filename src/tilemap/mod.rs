@@ -52,8 +52,8 @@ impl Tilemap {
     mode: &mut GameMode,
     party: &mut Party,
     battle: &mut Battle,
-    transition: &mut Transition,
-    menu: &mut MenuScreen
+    menu: &mut MenuScreen,
+    transition: &mut Transition
   ) -> GameResult<()> {
     if *mode == GameMode::Map && transition.style == TransitionStyle::None {
       self.player.update(ctx, &mut self.tiles, mode, party, battle, transition, menu, self.encounter_rate, self.enemy_formations)?;

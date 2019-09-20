@@ -5,10 +5,10 @@ use crate::data::enemies;
 
 pub fn test_room(ctx: &mut Context) -> Vec<Vec<Enemy>> {
   let rng = thread_rng().gen::<f32>();
-  if rng < 0.333333333333333 {
+  if rng < 0.9 {
     vec![
-      vec![enemies::test_triangle(ctx, 5, (0., 0.), (0, 0))],
-      vec![enemies::test_circle(ctx, 6, (2., 0.), (1, 0)), enemies::test_square(ctx, 7, (2., 1.), (1, 1))]
+      vec![enemies::test_triangle(ctx, 5, (0., 0.), (0, 0)), enemies::test_triangle(ctx, 6, (0., 2.), (0, 1))]
+      // vec![enemies::test_circle(ctx, 6, (2., 0.), (1, 0)), enemies::test_square(ctx, 7, (2., 1.), (1, 1))]
     ]
   } else if rng < 0.666666666666667 {
     vec![

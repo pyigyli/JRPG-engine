@@ -1,5 +1,5 @@
 macro_rules! text {($ctx:expr, $text:expr, $position_x:expr, $position_y:expr, $onclick:expr) => {
-  MenuItem::new($ctx, String::new(), $text.to_owned(),    ($position_x, $position_y), $onclick)
+  MenuItem::new($ctx, String::new(), $text.to_owned(), ($position_x, $position_y), $onclick)
 };}
 
 macro_rules! tiles {($([$(($spritesheet_x:expr, $spritesheet_y:expr, $entity:expr)$(,)?)*])*) => {
@@ -19,7 +19,7 @@ macro_rules! battle_target_positions {($ctx:expr, $party:expr, $enemies:expr, $a
           ctx,
           String::new(),
           " ".to_owned(),
-          (220. + character.x_offset, 105. + character.state.id as f32 * 65.),
+          (220. + character.x_offset, 65. + character.state.id as f32 * 66.),
           OnClickEvent::ActOnTarget(position, action_parameters.clone())
       ));
     }
@@ -33,13 +33,14 @@ macro_rules! battle_target_positions {($ctx:expr, $party:expr, $enemies:expr, $a
   target_positions.push(party_column);
   for column in $enemies {
     let mut column_vec = Vec::new();
+    let column_length = column_vec.len();
     for enemy in column {
       if enemy.state.hp != 0 {
         column_vec.push(MenuItem::new(
           $ctx,
           String::new(),
           " ".to_owned(),
-          (720. + enemy.x_offset + enemy.screen_pos.0 * 70., 220. + enemy.screen_pos.1 * 65.),
+          (720. + enemy.x_offset + enemy.screen_pos.0 * 70., 285. - column_length as f32 * 33. - enemy.size * 66. + enemy.screen_pos.1 * 66.),
           OnClickEvent::ActOnTarget((enemy.selection_pos.0 + 1, enemy.selection_pos.1), $action_parameters.clone())
         ));
       }
