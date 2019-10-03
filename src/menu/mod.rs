@@ -17,6 +17,10 @@ use crate::battle::enemy::Enemy;
 use crate::transition::{Transition, TransitionStyle};
 use crate::data::menus;
 
+pub enum MenuMovement {
+  Grid, ColumnOfRows, RowOfColumns
+}
+
 pub struct MenuScreen {
   pub open: bool,
   containers: Vec<MenuContainer>,
@@ -24,7 +28,7 @@ pub struct MenuScreen {
   pub unselectable_items: Vec<MenuItem>,
   cursor: spritebatch::SpriteBatch,
   pub cursor_pos: (usize, usize),
-  columns_first: bool,
+  cursor_movement_style: MenuMovement,
   input_cooldowns: InputCooldowns,
   return_action: OnClickEvent,
   pub mutation: Option<for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>>
@@ -38,7 +42,7 @@ impl MenuScreen {
     selectable_items: Vec<Vec<MenuItem>>,
     unselectable_items: Vec<MenuItem>,
     cursor_pos: (usize, usize),
-    columns_first: bool,
+    cursor_movement_style: MenuMovement,
     return_action: OnClickEvent
   ) -> MenuScreen {
     MenuScreen {
@@ -48,24 +52,31 @@ impl MenuScreen {
       unselectable_items,
       cursor: spritebatch::SpriteBatch::new(Image::new(ctx, "/cursor.png").unwrap()),
       cursor_pos,
-      columns_first,
+      cursor_movement_style,
       input_cooldowns: InputCooldowns::new(),
       return_action,
       mutation: None
     }
   }
 
-  pub fn update(&mut self, ctx: &mut Context, mode: &mut GameMode, party: &mut Party, battle: &mut Battle, transition: &mut Transition) -> GameResult<()> {
+  pub fn update(
+    &mut self,
+    ctx: &mut Context,
+    mode: &mut GameMode,
+    party: &mut Party,
+    battle: &mut Battle,
+    transition: &mut Transition
+  ) -> GameResult<()> {
     if *mode == GameMode::Map && keyboard::is_key_pressed(ctx, KeyCode::F) {
-      fn to_main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-        menus::menu_main(ctx)
+      fn to_main_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+        menus::main_menu(ctx, mode, party, enemies)
       }
       transition.set(TransitionStyle::MenuIn(to_main_menu))?;
     } else if self.open {
       if keyboard::is_key_pressed(ctx, KeyCode::A) && !self.input_cooldowns.a {
         self.input_cooldowns.a = true;
         match &mut self.selectable_items[self.cursor_pos.0][self.cursor_pos.1].on_click {
-          OnClickEvent::ToMenuScreen(new_menu)                                 => *self = new_menu(ctx, mode, party, &battle.enemies),
+          OnClickEvent::ToMenuScreen(new_menu, cursor_start)                   => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
           OnClickEvent::ToTargetSelection(target_selection, action_parameters) => *self = target_selection(ctx, party, &mut battle.enemies, action_parameters),
           OnClickEvent::ActOnTarget(target, action_parameters) => {
             self.open = false;
@@ -82,41 +93,56 @@ impl MenuScreen {
       if keyboard::is_key_pressed(ctx, KeyCode::S) && !self.input_cooldowns.s {
         self.input_cooldowns.s = true;
         match &self.return_action {
-          OnClickEvent::ToMenuScreen(new_menu) => *self = new_menu(ctx, mode, party, &battle.enemies),
-          OnClickEvent::Transition(new_mode)   => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::ToMenuScreen(new_menu, cursor_start) => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
+          OnClickEvent::Transition(new_mode)                 => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::MenuTransition(new_menu)             => transition.set(TransitionStyle::MenuIn(*new_menu))?,
           _ => ()
-        };
+        }
       } else if !keyboard::is_key_pressed(ctx, KeyCode::S) {
         self.input_cooldowns.s = false;
       }
       if keyboard::is_key_pressed(ctx, KeyCode::Up) && !self.input_cooldowns.up {
         self.input_cooldowns.up = true;
-        if       self.columns_first && self.cursor_pos.1 > 0 {self.cursor_pos.1 -= 1;}
-        else if !self.columns_first && self.cursor_pos.1 > 0 {self.cursor_pos = (0, self.cursor_pos.1 - 1);}
+        match self.cursor_movement_style {
+          MenuMovement::Grid         => {if self.cursor_pos.1 > 0 {self.cursor_pos.1 -= 1;}},
+          MenuMovement::ColumnOfRows => {if self.cursor_pos.1 > 0 {self.cursor_pos = (0, self.cursor_pos.1 - 1);}},
+          MenuMovement::RowOfColumns => {if self.cursor_pos.1 > 0 {self.cursor_pos.1 -= 1;}}
+        }
         return Ok(());
       } else if !keyboard::is_key_pressed(ctx, KeyCode::Up) {
         self.input_cooldowns.up = false;
       }
       if keyboard::is_key_pressed(ctx, KeyCode::Down) && !self.input_cooldowns.down {
         self.input_cooldowns.down = true;
-        if       self.columns_first && self.cursor_pos.1 < self.selectable_items[self.cursor_pos.0].len() - 1 {self.cursor_pos.1 += 1;}
-        else if !self.columns_first && self.cursor_pos.1 < self.selectable_items.len() - 1 {self.cursor_pos = (0, self.cursor_pos.1 + 1)}
+        match self.cursor_movement_style {
+          MenuMovement::Grid         => {if self.cursor_pos.1 < self.selectable_items[self.cursor_pos.0].len() - 1 {self.cursor_pos.1 += 1;}},
+          MenuMovement::ColumnOfRows => {if self.cursor_pos.1 < self.selectable_items.len() - 1 {self.cursor_pos = (0, self.cursor_pos.1 + 1)}},
+          MenuMovement::RowOfColumns => {if self.cursor_pos.1 < self.selectable_items[self.cursor_pos.0].len() - 1 {self.cursor_pos.1 += 1;}}
+        }
         return Ok(());
       } else if !keyboard::is_key_pressed(ctx, KeyCode::Down) {
         self.input_cooldowns.down = false;
       }
       if keyboard::is_key_pressed(ctx, KeyCode::Left) && !self.input_cooldowns.left {
         self.input_cooldowns.left = true;
-        if       self.columns_first && self.cursor_pos.0 > 0 {self.cursor_pos = (self.cursor_pos.0 - 1, 0);}
-        else if !self.columns_first && self.cursor_pos.0 > 0 {self.cursor_pos.0 -= 1;}
+        match self.cursor_movement_style {
+          MenuMovement::Grid         => {if self.cursor_pos.0 > 0 && self.selectable_items[self.cursor_pos.0 - 1].len() >= self.cursor_pos.1 {self.cursor_pos.0 -= 1;}},
+          MenuMovement::ColumnOfRows => {if self.cursor_pos.0 > 0 {self.cursor_pos.0 -= 1;}},
+          MenuMovement::RowOfColumns => {if self.cursor_pos.0 > 0 {self.cursor_pos = (self.cursor_pos.0 - 1, 0);}}
+        }
         return Ok(());
       } else if !keyboard::is_key_pressed(ctx, KeyCode::Left) {
         self.input_cooldowns.left = false;
       }
       if keyboard::is_key_pressed(ctx, KeyCode::Right) && !self.input_cooldowns.right {
         self.input_cooldowns.right = true;
-        if       self.columns_first && self.cursor_pos.0 < self.selectable_items.len() - 1 {self.cursor_pos = (self.cursor_pos.0 + 1, 0)}
-        else if !self.columns_first && self.cursor_pos.0 < self.selectable_items[self.cursor_pos.1].len() - 1 {self.cursor_pos.0 += 1;}
+        match self.cursor_movement_style {
+          MenuMovement::Grid => {
+            if self.cursor_pos.0 < self.selectable_items.len() - 1 && self.selectable_items[self.cursor_pos.0 + 1].len() >= self.cursor_pos.1 {self.cursor_pos.0 += 1;}
+          },
+          MenuMovement::ColumnOfRows => {if self.cursor_pos.0 < self.selectable_items[self.cursor_pos.1].len() - 1 {self.cursor_pos.0 += 1;}},
+          MenuMovement::RowOfColumns => {if self.cursor_pos.0 < self.selectable_items.len() - 1 {self.cursor_pos = (self.cursor_pos.0 + 1, 0)}}
+        }
         return Ok(());
       } else if !keyboard::is_key_pressed(ctx, KeyCode::Right) {
         self.input_cooldowns.right = false;

@@ -1,15 +1,18 @@
+use ggez::GameResult;
+use crate::battle::state::BattleState;
+
 pub enum DamageType {
-  None, Physical, Magical, Pure, Healing
+  None(for<'r, 's> fn(&'r ActionParameters, &'s mut BattleState) -> GameResult<()>), Physical, Magical, Pure, Healing
 }
 
 impl Clone for DamageType {
   fn clone(&self) -> Self {
     match self {
-      DamageType::None     => DamageType::None,
-      DamageType::Physical => DamageType::Physical,
-      DamageType::Magical  => DamageType::Magical,
-      DamageType::Pure     => DamageType::Pure,
-      DamageType::Healing  => DamageType::Healing
+      DamageType::None(action) => DamageType::None(*action),
+      DamageType::Physical     => DamageType::Physical,
+      DamageType::Magical      => DamageType::Magical,
+      DamageType::Pure         => DamageType::Pure,
+      DamageType::Healing      => DamageType::Healing
     }
   }
 }

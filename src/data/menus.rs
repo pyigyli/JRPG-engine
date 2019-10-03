@@ -1,22 +1,25 @@
 use ggez::{Context, GameResult};
 use crate::GameMode;
-use crate::menu::MenuScreen;
+use crate::menu::{MenuScreen, MenuMovement};
 use crate::menu::item::MenuItem;
 use crate::menu::container::MenuContainer;
-use crate::party::Party;
+use crate::party::{Party, InventoryElement};
 use crate::party::character::Character;
 use crate::battle::enemy::Enemy;
 use crate::battle::action::ActionParameters;
 use crate::menu::item::OnClickEvent;
 
 pub fn none_menu(ctx: &mut Context) -> MenuScreen {
-  MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), false, OnClickEvent::None)
+  MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), MenuMovement::Grid, OnClickEvent::None)
 }
 
-pub fn menu_main(ctx: &mut Context) -> MenuScreen {
+pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
   let submenu_selection = MenuContainer::new(ctx, 10. , 10., 250., 300.);
   let character_info    = MenuContainer::new(ctx, 275., 10., 795., 700.);
-  let item    = text!(ctx, "Item"   , 55., 60. , OnClickEvent::None);
+  fn to_item_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+    item_menu(ctx, mode, party, enemies, (0, 0))
+  }
+  let item    = text!(ctx, "Item"   , 55., 60. , OnClickEvent::MenuTransition(to_item_menu));
   let ability = text!(ctx, "Ability", 55., 100., OnClickEvent::None);
   let equip   = text!(ctx, "Equip"  , 55., 140., OnClickEvent::None);
   let config  = text!(ctx, "Config" , 55., 180., OnClickEvent::None);
@@ -29,8 +32,34 @@ pub fn menu_main(ctx: &mut Context) -> MenuScreen {
     ],
     Vec::new(),
     (0, 0),
-    true,
+    MenuMovement::RowOfColumns,
     OnClickEvent::Transition(GameMode::Map)
+  )
+}
+
+pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+  let container = MenuContainer::new(ctx, 10. , 10., 1060., 700.);
+  let mut first_item_column = Vec::new();
+  let mut second_item_column = Vec::new();
+  for (index, element) in party.inventory.iter_mut().enumerate() {
+    let (element_name, click_event) = match element {
+      InventoryElement::Item(item) => (item.get_name(), item.get_click_event((index % 2, index / 2)))
+    };
+    if index % 2 == 0 {
+      first_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, ((index % 2) as f32 * 500. + 100., (index / 2) as f32 * 24. + 50.), click_event));
+    } else {
+      second_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, ((index % 2) as f32 * 500. + 100., (index / 2) as f32 * 24. + 50.), click_event));
+    }
+  }
+  MenuScreen::new(
+    ctx,
+    true,
+    vec![container],
+    vec![first_item_column, second_item_column],
+    Vec::new(),
+    cursor_start,
+    MenuMovement::Grid,
+    OnClickEvent::MenuTransition(main_menu)
   )
 }
 
@@ -53,7 +82,7 @@ pub fn battle_main(ctx: &mut Context, character: &mut Character) -> MenuScreen {
     vec![vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change]],
     Vec::new(),
     (0, 0),
-    true,
+    MenuMovement::Grid,
     OnClickEvent::None
   )
 }
@@ -65,7 +94,7 @@ pub fn battle_target_selection(
   cursor_pos: (usize, usize),
   action_parameters: &ActionParameters
 ) -> MenuScreen {
-  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
     battle_main(ctx, party.get_active())
   }
   let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
@@ -83,8 +112,8 @@ pub fn battle_target_selection(
     target_positions,
     vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change],
     cursor_pos,
-    true,
-    OnClickEvent::ToMenuScreen(to_battle_main)
+    MenuMovement::Grid,
+    OnClickEvent::ToMenuScreen(to_battle_main, (1, 0))
   )
 }
 
@@ -193,7 +222,7 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
       gained_items_string
     ],
     (0, 0),
-    true,
+    MenuMovement::Grid,
     OnClickEvent::None
   )
 }

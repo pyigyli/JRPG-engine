@@ -3,7 +3,6 @@ use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use crate::battle::action::{ActionParameters, DamageType};
-use crate::battle::print_damage::PrintDamage;
 use crate::battle::state::BattleState;
 use crate::party::Party;
 use crate::party::character::{Character, Animation as CharacterAnimation};
@@ -89,9 +88,9 @@ impl Enemy {
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
     notification: &mut Option<Notification>,
-    print_damage: &mut Option<PrintDamage>
+    column_length: usize
   ) -> GameResult<()> {
-    self.state.atb_update(current_turn, active_turns)?;
+    self.state.update(current_turn, active_turns)?;
     if *current_turn == self.state.id && !self.turn_active {
       self.turn_active = true;
       let turn_action = self.turn_action;
@@ -126,16 +125,18 @@ impl Enemy {
           Animation::StartTurn(target_number, action_parameters) => {
             let mut parameters = action_parameters.clone();
             match target_number {
-              0 => self.act_on_target(ctx, &mut parameters, &mut party.first , print_damage)?,
-              1 => self.act_on_target(ctx, &mut parameters, &mut party.second, print_damage)?,
-              2 => self.act_on_target(ctx, &mut parameters, &mut party.third , print_damage)?,
-              _ => self.act_on_target(ctx, &mut parameters, &mut party.fourth, print_damage)?
+              0 => self.act_on_target(ctx, notification, &mut parameters, &mut party.first )?,
+              1 => self.act_on_target(ctx, notification, &mut parameters, &mut party.second)?,
+              2 => self.act_on_target(ctx, notification, &mut parameters, &mut party.third )?,
+              _ => self.act_on_target(ctx, notification, &mut parameters, &mut party.fourth)?
             }
           },
           Animation::EndTurn => {
             self.turn_active = false;
             *current_turn = 0;
-            self.state.end_turn()?;
+            self.state.end_turn(ctx, notification, &self.name, (
+              700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
+            ))?;
           },
           Animation::Hurt => {
             self.opacity = 1.;
@@ -156,34 +157,34 @@ impl Enemy {
   pub fn act_on_target(
     &mut self,
     ctx: &mut Context,
+    notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters,
-    character: &mut Character,
-    print_damage: &mut Option<PrintDamage>
+    character: &mut Character
   ) -> GameResult<()> {
     self.animation = (Animation::EndTurn, 30, ticks(ctx));
     match action_parameters.damage_type {
-      DamageType::Healing => {character.receive_battle_action(ctx, action_parameters, print_damage)},
+      DamageType::Healing => {character.receive_battle_action(ctx, notification, action_parameters)},
       _ => {
         character.animation = (CharacterAnimation::Hurt, 60, ticks(ctx));
-        character.receive_battle_action(ctx, action_parameters, print_damage)
+        character.receive_battle_action(ctx, notification, action_parameters)
       }
-    }   
+    }
   }
 
   pub fn receive_battle_action(
     &mut self,
     ctx: &mut Context,
+    notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters,
-    print_damage: &mut Option<PrintDamage>,
     column_length: usize
   ) -> GameResult<()> {
     match action_parameters.damage_type {
-      DamageType::None    => Ok(()),
-      DamageType::Healing => self.state.receive_healing(),
+      DamageType::None(action) => self.state.receive_none_type_action(action_parameters, action),
+      DamageType::Healing      => self.state.receive_healing(),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
-        self.state.receive_damage(ctx, action_parameters, print_damage, (
-          700. + self.x_offset + self.screen_pos.0 * 70., 280. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
+        self.state.receive_damage(ctx, notification, &self.name, action_parameters, (
+          700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
         ))
       }
     }
@@ -197,9 +198,9 @@ impl Enemy {
       }
     );
     let param = DrawParam::new()
-      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., 300. - column_length as f32 * 33. - self.size * 66. + self.screen_pos.1 * 66.));
+      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.));
     draw(ctx, &self.spritebatch, param)?;
     self.spritebatch.clear();
-    Ok(())
+    self.state.draw(ctx)
   }
 }

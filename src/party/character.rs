@@ -4,7 +4,6 @@ use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
-use crate::battle::print_damage::PrintDamage;
 use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
 use crate::menu::item::{MenuItem, OnClickEvent};
@@ -35,6 +34,7 @@ pub enum Sprite {
 
 pub struct Character {
   spritebatch: spritebatch::SpriteBatch,
+  avatar_spritefile: String,
   opacity: f32,
   pub animation: (Animation, usize, usize), // (Animation, length, starting tick)
   pub sprite: Sprite,
@@ -52,6 +52,7 @@ impl Character {
     ctx: &mut Context,
     id: u8,
     spritefile: String,
+    avatar_spritefile: String,
     name: String,
     level: u8,
     hp: u16,
@@ -70,6 +71,7 @@ impl Character {
     let character_info = CharacterInfo::new(ctx, id, &name, hp, mp);
     Character {
       spritebatch: batch,
+      avatar_spritefile,
       opacity: 1.,
       animation: (Animation::EndTurn, 0, 0),
       sprite: Sprite::StandRight,
@@ -92,7 +94,7 @@ impl Character {
     notification: &mut Option<Notification>
   ) -> GameResult<()> {
     if self.name.len() > 0 {
-      self.state.atb_update(current_turn, active_turns)?;
+      self.state.update(current_turn, active_turns)?;
       if *current_turn == self.state.id && !self.state.turn_active {
         self.state.turn_active = true;
         self.sprite = Sprite::StandRight;
@@ -134,7 +136,7 @@ impl Character {
               self.sprite = Sprite::StandRight;
               self.state.turn_active = false;
               *current_turn = 0;
-              self.state.end_turn()?;
+              self.state.end_turn(ctx, notification, &self.name, (200. + self.x_offset, 50. + self.state.id as f32 * 66.))?;
               if self.state.hp == 0 {
                 self.animation = (Animation::Dead, 20, ticks(ctx));
                 *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
@@ -162,16 +164,20 @@ impl Character {
     Ok(())
   }
 
-  pub fn receive_battle_action(&mut self, ctx: &mut Context, action_parameters: &mut ActionParameters, print_damage: &mut Option<PrintDamage>) -> GameResult<()> {
+  pub fn receive_battle_action(
+    &mut self,
+    ctx: &mut Context,
+    notification: &mut Option<Notification>,
+    action_parameters: &mut ActionParameters
+  ) -> GameResult<()> {
     match action_parameters.damage_type {
-      DamageType::None    => (),
-      DamageType::Healing => self.state.receive_healing()?,
+      DamageType::None(action) => self.state.receive_none_type_action(action_parameters, action),
+      DamageType::Healing      => self.state.receive_healing(),
       _ => {
-        self.state.receive_damage(ctx, action_parameters, print_damage, (240. + self.x_offset, 50. + self.state.id as f32 * 66.))?;
         self.animation = (Animation::Hurt, 60, ticks(ctx));
+        self.state.receive_damage(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.))
       }
     }
-    Ok(())
   }
 
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
@@ -200,6 +206,10 @@ impl Character {
       self.state.draw(ctx)?;
     }
     Ok(())
+  }
+
+  pub fn get_avatar(&self) -> String {
+    self.avatar_spritefile.to_owned()
   }
 
   pub fn get_attack_ability(&self, ctx: &mut Context) -> MenuItem {

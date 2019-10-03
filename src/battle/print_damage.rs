@@ -26,9 +26,9 @@ impl PrintDamage {
 
   pub fn update(&mut self) -> GameResult<()> {
     self.show_time -= 1.;
-    self.screen_pos.1 -= 0.00007 * self.show_time * self.show_time;
+    self.screen_pos.1 -= 0.000035 * self.show_time * self.show_time;
     if self.show_time < 60. {
-      self.opacity = (self.opacity - 0.01) * self.opacity;
+      self.opacity = (self.opacity - 0.001) * self.opacity;
     }
     Ok(())
   }

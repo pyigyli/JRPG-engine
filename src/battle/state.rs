@@ -3,15 +3,17 @@ use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::print_damage::PrintDamage;
 use crate::party::character_info::CharacterInfo;
+use crate::menu::notification::Notification;
+use std::cmp::max;
 
 pub struct BattleState {
   pub id: u8,
   level: u8,
   pub experience: u32,
-  max_hp: u16,
-  max_mp: u16,
+  pub max_hp: u16,
+  pub max_mp: u16,
   pub hp: u16,
-  mp: u16,
+  pub mp: u16,
   pub attack: u16,
   defence: u16,
   magic: u16,
@@ -22,7 +24,8 @@ pub struct BattleState {
   pub turn_active: bool,
   poisoned: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
   sleeping: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
-  character_info: Option<CharacterInfo>
+  character_info: Option<CharacterInfo>,
+  print_damage: Option<PrintDamage>
 }
 
 impl BattleState {
@@ -59,11 +62,12 @@ impl BattleState {
       turn_active: false,
       poisoned,
       sleeping,
-      character_info
+      character_info,
+      print_damage: None
     }
   }
 
-  pub fn atb_update(&mut self, current_turn: &mut u8, active_turns: &mut Vec<u8>) -> GameResult<()> {
+  pub fn update(&mut self, current_turn: &mut u8, active_turns: &mut Vec<u8>) -> GameResult<()> {
     if self.hp == 0 {
       self.atb = 0;
       self.atb_subtick = 0;
@@ -79,14 +83,36 @@ impl BattleState {
         }
       }
     }
+    if let Some(print_damage) = &mut self.print_damage {
+      if print_damage.show_time > 0. {
+        print_damage.update()?;
+      } else {
+        self.print_damage = None;
+      }
+    }
     Ok(())
   }
 
-  pub fn end_turn(&mut self) -> GameResult<()> {
+  pub fn end_turn(
+    &mut self,
+    ctx: &mut Context,
+    notification: &mut Option<Notification>,
+    name: &String,
+    position: (f32, f32)
+  ) -> GameResult<()> {
     if self.poisoned > 0 && self.poisoned != 126 {
       self.poisoned -= 1;
+      let poison_damage = max(self.hp / 20, 1);
+      *notification = Some(Notification::new(ctx, format!("{} took {} poison damage", name, poison_damage)));
+      if let Some(hp) = self.hp.checked_sub(poison_damage) {
+        self.hp = hp;
+      } else {
+        self.hp = 0;
+      }
+      self.print_damage = Some(PrintDamage::new(ctx, poison_damage, self.get_damage_position(position)));
       if let Some(info) = &mut self.character_info {
         if self.poisoned == 0 {info.remove_effect("poison".to_owned())?;}
+        info.hp.text = format!("{}/", self.hp);
       }
     } else if self.poisoned < 0 && self.poisoned != -125 {
       self.poisoned += 1;
@@ -111,9 +137,10 @@ impl BattleState {
   pub fn receive_damage(
     &mut self,
     ctx: &mut Context,
+    notification: &mut Option<Notification>,
+    name: &String,
     action_parameters: &mut ActionParameters,
-    print_damage: &mut Option<PrintDamage>,
-    screen_pos: (f32, f32)
+    position: (f32, f32)
   ) -> GameResult<()> {
     let damage = match action_parameters.damage_type {
       DamageType::Physical => action_parameters.power * 3 / self.defence,
@@ -143,6 +170,7 @@ impl BattleState {
         }
       }
       self.poisoned = 5;
+      *notification = Some(Notification::new(ctx, format!("{} is poisoned", name)))
     }
     if self.sleeping >= 0 && rng.gen::<f32>() < action_parameters.sleep_change {
       if let Some(info) = &mut self.character_info {
@@ -152,7 +180,7 @@ impl BattleState {
       }
       self.sleeping = 3;
     }
-    *print_damage = Some(PrintDamage::new(ctx, damage, screen_pos));
+    self.print_damage = Some(PrintDamage::new(ctx, damage, self.get_damage_position(position)));
     Ok(())
   }
 
@@ -160,10 +188,29 @@ impl BattleState {
     Ok(())
   }
 
+  pub fn receive_none_type_action(
+    &mut self,
+    action_parameters: &mut ActionParameters,
+    action: for<'r, 's> fn(&'r ActionParameters, &'s mut BattleState) -> GameResult<()>
+  ) -> GameResult<()> {
+    action(action_parameters, self)
+  }
+
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     if let Some(character_info) = &mut self.character_info {
       character_info.draw(ctx)?;
     }
+    if let Some(print_damage) = &mut self.print_damage {
+      print_damage.draw(ctx)?;
+    }
     Ok(())
+  }
+
+  fn get_damage_position(&self, position: (f32, f32)) -> (f32, f32) {
+    let mut damage_position = position;
+    if let Some(_) = &self.character_info {
+      damage_position.0 += 40.;
+    }
+    damage_position
   }
 }
