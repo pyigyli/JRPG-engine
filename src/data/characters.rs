@@ -1,8 +1,11 @@
 use ggez::{Context, GameResult};
+use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
+use crate::party::InventoryElement;
 use crate::party::character::Character;
 use crate::menu::item::OnClickEvent;
+use crate::menu::notification::Notification;
 use crate::data::menus;
 
 pub fn none_character(ctx: &mut Context, id: u8) -> Character {
@@ -16,7 +19,45 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
   let attack = ("Attack".to_owned(), OnClickEvent::ToTargetSelection(
     menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 1., false, 1., false)
   ));
-  fn steal_action(action_parameters: &ActionParameters, target_state: &mut BattleState) -> GameResult<()> {
+  fn steal_action(
+    ctx: &mut Context,
+    inventory: &mut Vec<InventoryElement>,
+    _action_parameters: &ActionParameters,
+    target_state: &mut BattleState,
+    notification: &mut Option<Notification>
+  ) -> GameResult<()> {
+    if target_state.common_steal.is_none() && target_state.rare_steal.is_none() {
+      *notification = Some(Notification::new(ctx, "Nothing to steal".to_owned()));
+    } else {
+      let rng = thread_rng().gen::<f32>();
+      if rng < 0.5 {
+        if let Some(common_steal) = &target_state.common_steal {
+          if let Some(inventory_stack) = inventory.into_iter().find(|inventory_element| match inventory_element {
+              InventoryElement::Item(item, _) => item.get_name() == common_steal.get_name()
+            }
+          ) {
+            match inventory_stack {
+              InventoryElement::Item(_, amount) => if *amount < 99 {*amount += 1}
+            }
+            *notification = Some(Notification::new(ctx, format!("Stole {}", common_steal.get_name())));
+          }
+        }
+      } else if rng < 0.6 {
+        if let Some(rare_steal) = &target_state.rare_steal {
+          if let Some(inventory_stack) = inventory.into_iter().find(|inventory_element| match inventory_element {
+              InventoryElement::Item(item, _) => item.get_name() == rare_steal.get_name()
+            }
+          ) {
+            match inventory_stack {
+              InventoryElement::Item(_, amount) => *amount += 1
+            }
+            *notification = Some(Notification::new(ctx, format!("Stole {}", rare_steal.get_name())));
+          }
+        }
+      } else {
+        *notification = Some(Notification::new(ctx, "Could not steal".to_owned()));
+      }
+    }
     Ok(())
   }
   let primary_ability = ("Steal".to_owned(), OnClickEvent::ToTargetSelection(

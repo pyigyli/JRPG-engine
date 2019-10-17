@@ -4,8 +4,9 @@ use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
-use crate::party::Party;
+use crate::party::{Party, InventoryElement};
 use crate::party::character::{Character, Animation as CharacterAnimation};
+use crate::party::item::InventoryItem;
 use crate::menu::notification::Notification;
 
 pub enum Animation {
@@ -59,6 +60,8 @@ impl Enemy {
     resistance: u16,
     agility: u8,
     experience: u32,
+    common_steal: Option<InventoryItem>,
+    rare_steal: Option<InventoryItem>,
     poisoned: i8,
     sleeping: i8,
     turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>,
@@ -75,7 +78,7 @@ impl Enemy {
       animation: (Animation::EndTurn, 0, 0),
       x_offset: 0.,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, poisoned, sleeping, None),
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, common_steal, rare_steal, poisoned, sleeping, None),
       dead: false,
       turn_action
     }
@@ -125,10 +128,10 @@ impl Enemy {
           Animation::StartTurn(target_number, action_parameters) => {
             let mut parameters = action_parameters.clone();
             match target_number {
-              0 => self.act_on_target(ctx, notification, &mut parameters, &mut party.first )?,
-              1 => self.act_on_target(ctx, notification, &mut parameters, &mut party.second)?,
-              2 => self.act_on_target(ctx, notification, &mut parameters, &mut party.third )?,
-              _ => self.act_on_target(ctx, notification, &mut parameters, &mut party.fourth)?
+              0 => self.act_on_target(ctx, &mut party.inventory, notification, &mut parameters, &mut party.first )?,
+              1 => self.act_on_target(ctx, &mut party.inventory, notification, &mut parameters, &mut party.second)?,
+              2 => self.act_on_target(ctx, &mut party.inventory, notification, &mut parameters, &mut party.third )?,
+              _ => self.act_on_target(ctx, &mut party.inventory, notification, &mut parameters, &mut party.fourth)?
             }
           },
           Animation::EndTurn => {
@@ -157,16 +160,17 @@ impl Enemy {
   pub fn act_on_target(
     &mut self,
     ctx: &mut Context,
+    inventory: &mut Vec<InventoryElement>,
     notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters,
     character: &mut Character
   ) -> GameResult<()> {
     self.animation = (Animation::EndTurn, 30, ticks(ctx));
     match action_parameters.damage_type {
-      DamageType::Healing => {character.receive_battle_action(ctx, notification, action_parameters)},
+      DamageType::Healing => {character.receive_battle_action(ctx, inventory, notification, action_parameters)},
       _ => {
         character.animation = (CharacterAnimation::Hurt, 60, ticks(ctx));
-        character.receive_battle_action(ctx, notification, action_parameters)
+        character.receive_battle_action(ctx, inventory, notification, action_parameters)
       }
     }
   }
@@ -174,12 +178,13 @@ impl Enemy {
   pub fn receive_battle_action(
     &mut self,
     ctx: &mut Context,
+    inventory: &mut Vec<InventoryElement>,
     notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters,
     column_length: usize
   ) -> GameResult<()> {
     match action_parameters.damage_type {
-      DamageType::None(action) => self.state.receive_none_type_action(action_parameters, action),
+      DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, action, notification),
       DamageType::Healing      => self.state.receive_healing(),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));

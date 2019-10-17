@@ -4,6 +4,7 @@ use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::enemy::{Enemy, Animation};
 use crate::party::Party;
+use crate::party::item::{InventoryItem, ItemVariant};
 use crate::menu::notification::Notification;
 
 fn get_random_target(party: &Party) -> u8 {
@@ -39,13 +40,79 @@ fn turn_action(ctx: &mut Context, enemy: &mut Enemy, party: &mut Party, notifica
 }
 
 pub fn test_triangle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-triangle.png".to_owned(), screen_pos, selection_pos, 2., "Triangle".to_owned(),  3, 16, 5, 6, 2, 2, 2, 2, 15, 0, 0, turn_action)
+  Enemy::new(
+    ctx,
+    id,
+    "/enemies/test-triangle.png".to_owned(),
+    screen_pos,
+    selection_pos,
+    2.,
+    "Triangle".to_owned(),
+    3,
+    16,
+    5,
+    6,
+    2,
+    2,
+    2,
+    2,
+    15,
+    Some(InventoryItem::new(ItemVariant::Potion)),
+    Some(InventoryItem::new(ItemVariant::Ether)),
+    0,
+    0,
+    turn_action
+  )
 }
 
 pub fn test_circle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-circle.png".to_owned()  , screen_pos, selection_pos, 1., "Circle".to_owned(),    2, 12, 6, 4, 1, 1, 2, 3, 7, 0, 0, turn_action)
+  Enemy::new(
+    ctx,
+    id,
+    "/enemies/test-circle.png".to_owned(),
+    screen_pos,
+    selection_pos,
+    1.,
+    "Circle".to_owned(),
+    2,
+    12,
+    6,
+    4,
+    1,
+    1,
+    2,
+    3,
+    7,
+    Some(InventoryItem::new(ItemVariant::Potion)),
+    Some(InventoryItem::new(ItemVariant::Ether)),
+    0,
+    0,
+    turn_action
+  )
 }
 
 pub fn test_square(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_pos: (usize, usize)) -> Enemy {
-  Enemy::new(ctx, id, "/enemies/test-square.png".to_owned()  , screen_pos, selection_pos, 1., "Square".to_owned(),    2, 12, 6, 4, 2, 2, 2, 3, 8, 0, 0, turn_action)
+  Enemy::new(
+    ctx,
+    id,
+    "/enemies/test-square.png".to_owned(),
+    screen_pos,
+    selection_pos,
+    1.,
+    "Square".to_owned(),
+    2,
+    12,
+    6,
+    4,
+    2,
+    2,
+    2,
+    3,
+    8,
+    Some(InventoryItem::new(ItemVariant::Potion)),
+    Some(InventoryItem::new(ItemVariant::Ether)),
+    0,
+    0,
+    turn_action
+  )
 }

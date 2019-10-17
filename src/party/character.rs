@@ -4,6 +4,7 @@ use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
+use crate::party::{Party, InventoryElement};
 use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
 use crate::menu::item::{MenuItem, OnClickEvent};
@@ -78,7 +79,7 @@ impl Character {
       frame: 0.,
       x_offset: 0.,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0, 0, 0, Some(character_info)),
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0, None, None, 0, 0, Some(character_info)),
       attack_ability,
       primary_ability,
       secondary_ability
@@ -167,11 +168,12 @@ impl Character {
   pub fn receive_battle_action(
     &mut self,
     ctx: &mut Context,
+    inventory: &mut Vec<InventoryElement>,
     notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters
   ) -> GameResult<()> {
     match action_parameters.damage_type {
-      DamageType::None(action) => self.state.receive_none_type_action(action_parameters, action),
+      DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, action, notification),
       DamageType::Healing      => self.state.receive_healing(),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
@@ -213,14 +215,14 @@ impl Character {
   }
 
   pub fn get_attack_ability(&self, ctx: &mut Context) -> MenuItem {
-    MenuItem::new(ctx, "".to_owned(), self.attack_ability.0.to_owned(), (55., 440.), self.attack_ability.1.clone())
+    MenuItem::new(ctx, "".to_owned(), self.attack_ability.0.to_owned(), (55., 440.), 24., self.attack_ability.1.clone())
   }
 
   pub fn get_primary_ability(&self, ctx: &mut Context) -> MenuItem {
-    MenuItem::new(ctx, "".to_owned(), self.primary_ability.0.to_owned(), (55., 480.), self.primary_ability.1.clone())
+    MenuItem::new(ctx, "".to_owned(), self.primary_ability.0.to_owned(), (55., 480.), 24., self.primary_ability.1.clone())
   }
 
   pub fn get_secondary_ability(&self, ctx: &mut Context) -> MenuItem {
-    MenuItem::new(ctx, "".to_owned(), self.secondary_ability.0.to_owned(), (55., 520.), self.secondary_ability.1.clone())
+    MenuItem::new(ctx, "".to_owned(), self.secondary_ability.0.to_owned(), (55., 520.), 24., self.secondary_ability.1.clone())
   }
 }

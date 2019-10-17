@@ -1,13 +1,12 @@
 use ggez::{Context, GameResult};
 use crate::GameMode;
-use crate::menu::{MenuScreen, MenuMovement};
-use crate::menu::item::MenuItem;
+use crate::menu::{MenuScreen, MenuMovement, MenuMutation};
+use crate::menu::item::{MenuItem, OnClickEvent};
 use crate::menu::container::MenuContainer;
 use crate::party::{Party, InventoryElement};
 use crate::party::character::Character;
 use crate::battle::enemy::Enemy;
 use crate::battle::action::ActionParameters;
-use crate::menu::item::OnClickEvent;
 
 pub fn none_menu(ctx: &mut Context) -> MenuScreen {
   MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), MenuMovement::Grid, OnClickEvent::None)
@@ -37,26 +36,53 @@ pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _e
   )
 }
 
-pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, mut cursor_start: (usize, usize)) -> MenuScreen {
+  party.inventory.sort_by(|a, b| { // Sort items with amount 0 to the end of array.
+    let a_amount = match a {
+      InventoryElement::Item(_, amount) => match *amount {0 => 0, _ => 1}
+    };
+    let b_amount = match b {
+      InventoryElement::Item(_, amount) => match *amount {0 => 0, _ => 1}
+    };
+    return b_amount.cmp(&a_amount);
+  });
   let container = MenuContainer::new(ctx, 10. , 10., 1060., 700.);
   let mut first_item_column = Vec::new();
   let mut second_item_column = Vec::new();
+  let mut unselectables = Vec::new();
   for (index, element) in party.inventory.iter_mut().enumerate() {
-    let (element_name, click_event) = match element {
-      InventoryElement::Item(item) => (item.get_name(), item.get_click_event((index % 2, index / 2)))
+    let (element_name, element_amount, click_event) = match element {
+      InventoryElement::Item(item, amount) => (item.get_name(), amount, item.get_click_event((index % 2, index / 2)))
     };
-    if index % 2 == 0 {
-      first_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, ((index % 2) as f32 * 500. + 100., (index / 2) as f32 * 24. + 50.), click_event));
+    let item_height = (index / 2) as f32 * 24. + 50.;
+    if *element_amount > 0 {
+      if index % 2 == 0 {
+        first_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, (0. + 100., item_height), 24., click_event));
+        unselectables.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (400. + 100., item_height), 24., OnClickEvent::None));
+      } else {
+        second_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, (500. + 100., item_height), 24., click_event));
+        unselectables.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (900. + 100., item_height), 24., OnClickEvent::None));
+      }
+    }
+  }
+  let selectable_items = match first_item_column.len() {
+    0 => vec![vec![MenuItem::new(ctx, "".to_owned(), " ".to_owned(), (0., 0.), 24., OnClickEvent::None)]],
+    _ => vec![first_item_column, second_item_column]
+  };
+  if selectable_items[cursor_start.0].get(cursor_start.1).is_none() { // Change cursor position if last item of inventory was deplenished
+    if cursor_start.0 % 2 == 0 {
+      cursor_start.0 += 1;
+      cursor_start.1 -= 1;
     } else {
-      second_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, ((index % 2) as f32 * 500. + 100., (index / 2) as f32 * 24. + 50.), click_event));
+      cursor_start.0 -= 1;
     }
   }
   MenuScreen::new(
     ctx,
     true,
     vec![container],
-    vec![first_item_column, second_item_column],
-    Vec::new(),
+    selectable_items,
+    unselectables,
     cursor_start,
     MenuMovement::Grid,
     OnClickEvent::MenuTransition(main_menu)
@@ -94,7 +120,7 @@ pub fn battle_target_selection(
   cursor_pos: (usize, usize),
   action_parameters: &ActionParameters
 ) -> MenuScreen {
-  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, _cursor_start: (usize, usize)) -> MenuScreen {
     battle_main(ctx, party.get_active())
   }
   let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
@@ -141,7 +167,7 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
       }
       Ok(())
     }
-    menu.mutation = Some(count_experience);
+    menu.mutation = MenuMutation::DefaultMutation(count_experience);
     Ok(())
   }
   fn finish_exp_count(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
@@ -157,7 +183,7 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
       menu.selectable_items[0][0].on_click = OnClickEvent::Transition(GameMode::Map);
       Ok(())
     }
-    menu.mutation = Some(end_exp_cound);
+    menu.mutation = MenuMutation::DefaultMutation(end_exp_cound);
     Ok(())
   }
   let experience_container   = MenuContainer::new(ctx, 50. , 10. , 500. , 100.);

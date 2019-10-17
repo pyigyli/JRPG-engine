@@ -21,6 +21,24 @@ pub enum MenuMovement {
   Grid, ColumnOfRows, RowOfColumns
 }
 
+pub enum MenuMutation {
+  None,
+  DefaultMutation(for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>),
+  UseItemInMenu(
+    for<'r, 's, 't0, 't1, 't2> fn(
+      &'r mut Context,
+      &'s mut MenuScreen,
+      &'t0 mut GameMode,
+      &'t1 mut Party,
+      &'t2 Vec<Vec<Enemy>>,
+      (usize, usize),
+      Vec<u8>
+    ) -> GameResult<()>,
+    Vec<u8>,
+    (usize, usize)
+  )
+}
+
 pub struct MenuScreen {
   pub open: bool,
   containers: Vec<MenuContainer>,
@@ -31,7 +49,7 @@ pub struct MenuScreen {
   cursor_movement_style: MenuMovement,
   input_cooldowns: InputCooldowns,
   return_action: OnClickEvent,
-  pub mutation: Option<for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>>
+  pub mutation: MenuMutation
 }
 
 impl MenuScreen {
@@ -55,7 +73,7 @@ impl MenuScreen {
       cursor_movement_style,
       input_cooldowns: InputCooldowns::new(),
       return_action,
-      mutation: None
+      mutation: MenuMutation::None
     }
   }
 
@@ -82,9 +100,10 @@ impl MenuScreen {
             self.open = false;
             party.battle_turn_action(ctx, battle, *target, action_parameters)?;
           },
-          OnClickEvent::MutateMenu(mutation)     => self.mutation = Some(*mutation),
-          OnClickEvent::Transition(new_mode)     => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
-          OnClickEvent::MenuTransition(new_menu) => transition.set(TransitionStyle::MenuIn(*new_menu))?,
+          OnClickEvent::MutateMenu(mutation)                              => self.mutation = MenuMutation::DefaultMutation(*mutation),
+          OnClickEvent::Transition(new_mode)                              => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::MenuTransition(new_menu)                          => transition.set(TransitionStyle::MenuIn(*new_menu))?,
+          OnClickEvent::UseItemInMenu(mutation, targets, item_cursor_pos) => self.mutation = MenuMutation::UseItemInMenu(*mutation, targets.to_vec(), *item_cursor_pos),
           OnClickEvent::None => ()
         }
       } else if !keyboard::is_key_pressed(ctx, KeyCode::A) {
@@ -147,8 +166,14 @@ impl MenuScreen {
       } else if !keyboard::is_key_pressed(ctx, KeyCode::Right) {
         self.input_cooldowns.right = false;
       }
-      if let Some(mutate) = self.mutation {
-        mutate(self, party)?;
+      match &self.mutation {
+        MenuMutation::None => (),
+        MenuMutation::DefaultMutation(mutation) => mutation(self, party)?,
+        MenuMutation::UseItemInMenu(mutation, targets, item_cursor_pos) => {
+          let target_states = targets.to_vec();
+          let cursor_pos = *item_cursor_pos;
+          mutation(ctx, self, mode, party, &mut Vec::new(), cursor_pos, target_states)?;
+        }
       }
     }
     Ok(())
@@ -166,10 +191,10 @@ impl MenuScreen {
         item.draw(ctx)?;
       }
       if self.selectable_items.first().unwrap().len() > 0 {
-        let cursor_pos = self.selectable_items[self.cursor_pos.0][self.cursor_pos.1].screen_pos;
+        let selected_item = &self.selectable_items[self.cursor_pos.0][self.cursor_pos.1];
+        let cursor_pos = selected_item.screen_pos;
         self.cursor.add(DrawParam::new());
-        let param = DrawParam::new()
-          .dest(Point2::new(cursor_pos.0 - 50., cursor_pos.1));
+        let param = DrawParam::new().dest(Point2::new(cursor_pos.0 - 50., cursor_pos.1 + selected_item.sprite_height / 2. - 12.));
         draw(ctx, &self.cursor, param)?;
       }
     }

@@ -13,7 +13,7 @@ impl Notification {
     let text_pos = (530. - text.len() as f32 * 12., 40.);
     Notification {
       container: MenuContainer::new(ctx, 10., 10., 1060., 84.),
-      text: MenuItem::new(ctx, "".to_owned(), text, text_pos, OnClickEvent::None),
+      text: MenuItem::new(ctx, "".to_owned(), text, text_pos, 24., OnClickEvent::None),
       show_time: 90
     }
   }

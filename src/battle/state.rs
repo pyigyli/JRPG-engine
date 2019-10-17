@@ -2,7 +2,9 @@ use ggez::{Context, GameResult};
 use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::print_damage::PrintDamage;
+use crate::party::InventoryElement;
 use crate::party::character_info::CharacterInfo;
+use crate::party::item::InventoryItem;
 use crate::menu::notification::Notification;
 use std::cmp::max;
 
@@ -24,6 +26,8 @@ pub struct BattleState {
   pub turn_active: bool,
   poisoned: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
   sleeping: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
+  pub common_steal: Option<InventoryItem>,
+  pub rare_steal: Option<InventoryItem>,
   character_info: Option<CharacterInfo>,
   print_damage: Option<PrintDamage>
 }
@@ -40,6 +44,8 @@ impl BattleState {
     resistance: u16,
     agility: u8,
     experience: u32,
+    common_steal: Option<InventoryItem>,
+    rare_steal: Option<InventoryItem>,
     poisoned: i8,
     sleeping: i8,
     character_info: Option<CharacterInfo>
@@ -62,6 +68,8 @@ impl BattleState {
       turn_active: false,
       poisoned,
       sleeping,
+      common_steal,
+      rare_steal,
       character_info,
       print_damage: None
     }
@@ -190,10 +198,19 @@ impl BattleState {
 
   pub fn receive_none_type_action(
     &mut self,
+    ctx: &mut Context,
+    inventory: &mut Vec<InventoryElement>,
     action_parameters: &mut ActionParameters,
-    action: for<'r, 's> fn(&'r ActionParameters, &'s mut BattleState) -> GameResult<()>
+    action: for<'r, 's, 't1, 't2, 't3> fn(
+      &'r mut Context,
+      &'s mut Vec<InventoryElement>,
+      &'t1 ActionParameters,
+      &'t2 mut BattleState,
+      &'t3 mut Option<Notification>
+    ) -> GameResult<()>,
+    notification: &mut Option<Notification>
   ) -> GameResult<()> {
-    action(action_parameters, self)
+    action(ctx, inventory, action_parameters, self, notification)
   }
 
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

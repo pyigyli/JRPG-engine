@@ -4,7 +4,7 @@ pub mod character_info;
 pub mod character;
 use character::{Character, Animation, Sprite};
 pub mod item;
-use item::{Item, ItemVariant};
+use item::{InventoryItem, ItemVariant};
 use crate::battle::Battle;
 use crate::battle::action::ActionParameters;
 use crate::menu::MenuScreen;
@@ -14,7 +14,7 @@ use crate::transition::{Transition, TransitionStyle};
 use crate::data::{characters, menus};
 
 pub enum InventoryElement {
-  Item(Item)
+  Item(InventoryItem, u8)
 }
 
 pub struct Party {
@@ -32,7 +32,10 @@ impl Party {
       second: characters::nurse_seraphine(ctx, 2),
       third:  characters::none_character(ctx, 3),
       fourth: characters::none_character(ctx, 4),
-      inventory: vec![InventoryElement::Item(Item::new(ItemVariant::Potion)), InventoryElement::Item(Item::new(ItemVariant::Potion))]
+      inventory: vec![ // Must have value 0 or more for every item
+        InventoryElement::Item(InventoryItem::new(ItemVariant::Potion), 2),
+        InventoryElement::Item(InventoryItem::new(ItemVariant::Ether) , 1)
+      ]
     }
   }
 
@@ -83,14 +86,14 @@ impl Party {
     character.sprite = Sprite::Attack;
     match target_pos.0 {
       0 => match target_pos.1 {
-        0 => self.first .receive_battle_action(ctx, &mut battle.notification, action_parameters),
-        1 => self.second.receive_battle_action(ctx, &mut battle.notification, action_parameters),
-        2 => self.third .receive_battle_action(ctx, &mut battle.notification, action_parameters),
-        _ => self.fourth.receive_battle_action(ctx, &mut battle.notification, action_parameters),
+        0 => self.first .receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
+        1 => self.second.receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
+        2 => self.third .receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
+        _ => self.fourth.receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
       }
       _ => {
         let column_length = battle.enemies[target_pos.0 - 1].len();
-        battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, &mut battle.notification, action_parameters, column_length)
+        battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters, column_length)
       }
     }
   }
