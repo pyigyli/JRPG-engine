@@ -17,7 +17,7 @@ pub fn none_character(ctx: &mut Context, id: u8) -> Character {
 
 pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
   let attack = ("Attack".to_owned(), OnClickEvent::ToTargetSelection(
-    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 1., false, 1., false)
+    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 1., false, 1., false), (0, 0)
   ));
   fn steal_action(
     ctx: &mut Context,
@@ -61,7 +61,7 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
     Ok(())
   }
   let primary_ability = ("Steal".to_owned(), OnClickEvent::ToTargetSelection(
-    menus::to_target_selection, ActionParameters::new(DamageType::None(steal_action), 0, 0., false, 0., false, 0., false)
+    menus::to_target_selection, ActionParameters::new(DamageType::None(steal_action), 0, 0., false, 0., false, 0., false), (0, 1)
   ));
   let secondary_ability = ("Flee".to_owned(), OnClickEvent::None);
   Character::new(
@@ -86,10 +86,10 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
 
 pub fn nurse_seraphine(ctx: &mut Context, id: u8) -> Character {
   let attack = ("Attack".to_owned(), OnClickEvent::ToTargetSelection(
-    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false)
+    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false), (0, 0)
   ));
   let primary_ability = ("Medicine".to_owned(), OnClickEvent::ToTargetSelection(
-    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false)
+    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false), (0, 1)
   ));
   let secondary_ability = ("asdf".to_owned(), OnClickEvent::None);
   Character::new(

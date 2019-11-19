@@ -91,10 +91,9 @@ impl Party {
         2 => self.third .receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
         _ => self.fourth.receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters),
       }
-      _ => {
-        let column_length = battle.enemies[target_pos.0 - 1].len();
-        battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(ctx, &mut self.inventory, &mut battle.notification, action_parameters, column_length)
-      }
+      _ => battle.enemies[target_pos.0 - 1][target_pos.1].receive_battle_action(
+        ctx, &mut self.inventory, &mut battle.notification, action_parameters, battle.enemies_start_draw_height
+      )
     }
   }
 

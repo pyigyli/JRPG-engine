@@ -94,8 +94,10 @@ impl MenuScreen {
       if keyboard::is_key_pressed(ctx, KeyCode::A) && !self.input_cooldowns.a {
         self.input_cooldowns.a = true;
         match &mut self.selectable_items[self.cursor_pos.0][self.cursor_pos.1].on_click {
-          OnClickEvent::ToMenuScreen(new_menu, cursor_start)                   => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
-          OnClickEvent::ToTargetSelection(target_selection, action_parameters) => *self = target_selection(ctx, party, &mut battle.enemies, action_parameters),
+          OnClickEvent::ToMenuScreen(new_menu, cursor_start) => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
+          OnClickEvent::ToTargetSelection(target_selection, action_parameters, cursor_memory) => {
+            *self = target_selection(ctx, party, &mut battle.enemies, action_parameters, *cursor_memory);
+          },
           OnClickEvent::ActOnTarget(target, action_parameters) => {
             self.open = false;
             party.battle_turn_action(ctx, battle, *target, action_parameters)?;

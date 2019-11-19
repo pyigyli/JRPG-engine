@@ -47,12 +47,12 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
     return b_amount.cmp(&a_amount);
   });
   let container = MenuContainer::new(ctx, 10. , 10., 1060., 700.);
-  let mut first_item_column = Vec::new();
+  let mut first_item_column  = Vec::new();
   let mut second_item_column = Vec::new();
-  let mut unselectables = Vec::new();
+  let mut unselectables      = Vec::new();
   for (index, element) in party.inventory.iter_mut().enumerate() {
     let (element_name, element_amount, click_event) = match element {
-      InventoryElement::Item(item, amount) => (item.get_name(), amount, item.get_click_event((index % 2, index / 2)))
+      InventoryElement::Item(item, amount) => (item.get_name(), amount, item.get_to_menu_click_event((index % 2, index / 2)))
     };
     let item_height = (index / 2) as f32 * 24. + 50.;
     if *element_amount > 0 {
@@ -89,16 +89,22 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
   )
 }
 
-pub fn to_target_selection(ctx: &mut Context, party: &mut Party, enemies: &Vec<Vec<Enemy>>, action_parameters: &ActionParameters) -> MenuScreen {
-  battle_target_selection(ctx, party, enemies, (1, 0), action_parameters)
+pub fn to_target_selection(
+  ctx: &mut Context,
+  party: &mut Party,
+  enemies: &Vec<Vec<Enemy>>,
+  action_parameters: &ActionParameters,
+  cursor_memory: (usize, usize)
+) -> MenuScreen {
+  battle_target_selection(ctx, party, enemies, (1, 0), action_parameters, cursor_memory)
 }
 
-pub fn battle_main(ctx: &mut Context, character: &mut Character) -> MenuScreen {
+pub fn battle_main(ctx: &mut Context, character: &mut Character, cursor_start: (usize, usize)) -> MenuScreen {
   let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
   let attack_ability    = character.get_attack_ability(ctx);
   let primary_ability   = character.get_primary_ability(ctx);
   let secondary_ability = character.get_secondary_ability(ctx);
-  let item       = text!(ctx, "Item"  , 55., 560., OnClickEvent::None);
+  let item       = text!(ctx, "Item"  , 55., 560., OnClickEvent::ToMenuScreen(battle_item_menu, (0, 3)));
   let defend     = text!(ctx, "Defend", 55., 600., OnClickEvent::None);
   let row_change = text!(ctx, "Change", 55., 640., OnClickEvent::None);
   MenuScreen::new(
@@ -107,9 +113,36 @@ pub fn battle_main(ctx: &mut Context, character: &mut Character) -> MenuScreen {
     vec![commands],
     vec![vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change]],
     Vec::new(),
-    (0, 0),
+    cursor_start,
     MenuMovement::Grid,
     OnClickEvent::None
+  )
+}
+
+fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+  battle_main(ctx, party.get_active(), cursor_start)
+}
+
+pub fn battle_item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+  let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
+  let mut selectable_items   = Vec::new();
+  let mut unselectable_items = Vec::new();
+  for (index, inventory_item) in party.inventory.iter().take(6).enumerate() {
+    let (item, item_amount) = match inventory_item {
+      InventoryElement::Item(item, amount) => (item, format!("x{}", amount))
+    };
+    selectable_items  .push(text!(ctx, item.get_name(), 55. , 440. + index as f32 * 40., item.get_to_target_selection_click_event(index)));
+    unselectable_items.push(text!(ctx, item_amount    , 220., 440. + index as f32 * 40., OnClickEvent::None));
+  }
+  MenuScreen::new(
+    ctx,
+    true,
+    vec![commands],
+    vec![selectable_items],
+    unselectable_items,
+    (0, 0),
+    MenuMovement::Grid,
+    OnClickEvent::ToMenuScreen(to_battle_main, cursor_start)
   )
 }
 
@@ -118,11 +151,9 @@ pub fn battle_target_selection(
   party: &mut Party,
   enemies: &Vec<Vec<Enemy>>,
   cursor_pos: (usize, usize),
-  action_parameters: &ActionParameters
+  action_parameters: &ActionParameters,
+  cursor_memory: (usize, usize)
 ) -> MenuScreen {
-  fn to_battle_main(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, _cursor_start: (usize, usize)) -> MenuScreen {
-    battle_main(ctx, party.get_active())
-  }
   let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
   let target_positions = battle_target_positions!(ctx, party, enemies, action_parameters);
   let attack_ability    = party.get_active().get_attack_ability(ctx);
@@ -139,7 +170,7 @@ pub fn battle_target_selection(
     vec![attack_ability, primary_ability, secondary_ability, item, defend, row_change],
     cursor_pos,
     MenuMovement::Grid,
-    OnClickEvent::ToMenuScreen(to_battle_main, (1, 0))
+    OnClickEvent::ToMenuScreen(to_battle_main, cursor_memory)
   )
 }
 

@@ -28,7 +28,7 @@ pub struct BattleState {
   sleeping: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
   pub common_steal: Option<InventoryItem>,
   pub rare_steal: Option<InventoryItem>,
-  character_info: Option<CharacterInfo>,
+  pub character_info: Option<CharacterInfo>,
   print_damage: Option<PrintDamage>
 }
 
@@ -147,7 +147,7 @@ impl BattleState {
     ctx: &mut Context,
     notification: &mut Option<Notification>,
     name: &String,
-    action_parameters: &mut ActionParameters,
+    action_parameters: &ActionParameters,
     position: (f32, f32)
   ) -> GameResult<()> {
     let damage = match action_parameters.damage_type {
@@ -200,7 +200,7 @@ impl BattleState {
     &mut self,
     ctx: &mut Context,
     inventory: &mut Vec<InventoryElement>,
-    action_parameters: &mut ActionParameters,
+    action_parameters: &ActionParameters,
     action: for<'r, 's, 't1, 't2, 't3> fn(
       &'r mut Context,
       &'s mut Vec<InventoryElement>,

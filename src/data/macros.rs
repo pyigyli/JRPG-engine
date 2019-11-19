@@ -32,16 +32,25 @@ macro_rules! battle_target_positions {($ctx:expr, $party:expr, $enemies:expr, $a
   push_character($ctx, &mut party_column, &mut $party.third , (0, 2), $action_parameters);
   push_character($ctx, &mut party_column, &mut $party.fourth, (0, 3), $action_parameters);
   target_positions.push(party_column);
+  let mut max_enemy_column_length = 0.;
+  for column in $enemies {
+    let mut column_length = 0.;
+    for enemy in column {
+      column_length += enemy.size;
+    }
+    if max_enemy_column_length < column_length {
+      max_enemy_column_length = column_length;
+    }
+  }
   for column in $enemies {
     let mut column_vec = Vec::new();
-    let column_length = column_vec.len();
     for enemy in column {
       if enemy.state.hp != 0 {
         column_vec.push(MenuItem::new(
           $ctx,
           String::new(),
           " ".to_owned(),
-          (710. + enemy.x_offset + enemy.screen_pos.0 * 70., 285. - column_length as f32 * 33. - enemy.size * 66. + enemy.screen_pos.1 * 66.),
+          (710. + enemy.x_offset + enemy.screen_pos.0 * 70., 184. - max_enemy_column_length * 16. + enemy.screen_pos.1 * 66.),
           enemy.size * 32.,
           OnClickEvent::ActOnTarget((enemy.selection_pos.0 + 1, enemy.selection_pos.1), $action_parameters.clone())
         ));

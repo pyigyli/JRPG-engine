@@ -16,6 +16,7 @@ use crate::transition::Transition;
 pub struct Battle {
   party_info_container: MenuContainer,
   pub enemies: Vec<Vec<Enemy>>,
+  pub enemies_start_draw_height: f32,
   active_turns: Vec<u8>,
   pub current_turn: u8, // 0 = Noone's turn, 1-4 party member's turn, 5 >= enemy's turn
   pub notification: Option<Notification>,
@@ -30,9 +31,20 @@ impl Battle {
     if party.second.state.hp > 0 {party.second.sprite = Sprite::StandRight;}
     if party.third .state.hp > 0 {party.third.sprite  = Sprite::StandRight;}
     if party.fourth.state.hp > 0 {party.fourth.sprite = Sprite::StandRight;}
+    let mut max_enemy_column_length = 0.;
+    for enemy_column in enemies.iter() {
+      let mut column_length = 0.;
+      for enemy in enemy_column.iter() {
+        column_length += enemy.size;
+      }
+      if max_enemy_column_length < column_length {
+        max_enemy_column_length = column_length;
+      }
+    }
     Battle {
       party_info_container: MenuContainer::new(ctx, 300., 400., 770., 300.),
       enemies,
+      enemies_start_draw_height: 184. - max_enemy_column_length * 16.,
       active_turns: Vec::new(),
       current_turn: 0,
       notification: None,
@@ -66,9 +78,8 @@ impl Battle {
       }
       let mut dead_enemies = Vec::new();
       for (i, enemy_column) in self.enemies.iter_mut().enumerate() {
-        let column_length = enemy_column.len();
         for (j, enemy) in enemy_column.iter_mut().enumerate() {
-          enemy.update(ctx, party, &mut self.active_turns, &mut self.current_turn, &mut self.notification, column_length)?;
+          enemy.update(ctx, party, &mut self.active_turns, &mut self.current_turn, &mut self.notification, self.enemies_start_draw_height)?;
           if enemy.dead == true {
             dead_enemies.push((i, j));
             self.experience_gained += enemy.state.experience;
@@ -112,9 +123,8 @@ impl Battle {
     self.party_info_container.draw(ctx)?;
     party.draw(ctx)?;
     for enemy_column in self.enemies.iter_mut() {
-      let column_length = enemy_column.len();
       for enemy in enemy_column.iter_mut() {
-        enemy.draw(ctx, column_length)?;
+        enemy.draw(ctx, self.enemies_start_draw_height)?;
       }
     }
     battle_menu.draw(ctx)?;

@@ -2,7 +2,7 @@ use ggez::{Context, GameResult};
 use crate::menu::item::{MenuItem, OnClickEvent};
 
 pub struct CharacterInfo {
-  name: MenuItem,
+  pub name: MenuItem,
   max_hp: MenuItem,
   max_mp: MenuItem,
   pub hp: MenuItem,

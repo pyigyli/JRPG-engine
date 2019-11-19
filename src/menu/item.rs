@@ -10,11 +10,12 @@ use crate::menu::MenuScreen;
 
 pub enum OnClickEvent {
   None,
-  ToMenuScreen(
-    for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>, (usize, usize)) -> MenuScreen,
+  ToMenuScreen(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>, (usize, usize)) -> MenuScreen, (usize, usize)),
+  ToTargetSelection(
+    for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Party, &'t0 Vec<Vec<Enemy>>, &'t1 ActionParameters, (usize, usize)) -> MenuScreen,
+    ActionParameters,
     (usize, usize)
   ),
-  ToTargetSelection(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Party, &'t0 Vec<Vec<Enemy>>, &'t1 ActionParameters) -> MenuScreen, ActionParameters),
   ActOnTarget((usize, usize), ActionParameters),
   MutateMenu(for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>),
   Transition(GameMode),
@@ -37,14 +38,16 @@ pub enum OnClickEvent {
 impl Clone for OnClickEvent {
   fn clone(&self) -> Self {
     match self {
-      OnClickEvent::None                                                   => OnClickEvent::None,
-      OnClickEvent::ToMenuScreen(new_menu, cursor_start)                   => OnClickEvent::ToMenuScreen(*new_menu, *cursor_start),
-      OnClickEvent::ToTargetSelection(target_selection, action_parameters) => OnClickEvent::ToTargetSelection(*target_selection, action_parameters.clone()),
-      OnClickEvent::ActOnTarget(position, action_parameters)               => OnClickEvent::ActOnTarget(*position, action_parameters.clone()),
-      OnClickEvent::MutateMenu(mutation)                                   => OnClickEvent::MutateMenu(*mutation),
-      OnClickEvent::Transition(new_mode)                                   => OnClickEvent::Transition(new_mode.clone()),
-      OnClickEvent::MenuTransition(new_menu)                               => OnClickEvent::MenuTransition(*new_menu),
-      OnClickEvent::UseItemInMenu(new_menu, targets, item_cursor_pos)      => OnClickEvent::UseItemInMenu(*new_menu, targets.to_vec(), *item_cursor_pos)
+      OnClickEvent::None                                              => OnClickEvent::None,
+      OnClickEvent::ToMenuScreen(new_menu, cursor_start)              => OnClickEvent::ToMenuScreen(*new_menu, *cursor_start),
+      OnClickEvent::ToTargetSelection(target_selection, action_parameters, cursor_memory) => {
+        OnClickEvent::ToTargetSelection(*target_selection, action_parameters.clone(), *cursor_memory)
+      },
+      OnClickEvent::ActOnTarget(position, action_parameters)          => OnClickEvent::ActOnTarget(*position, action_parameters.clone()),
+      OnClickEvent::MutateMenu(mutation)                              => OnClickEvent::MutateMenu(*mutation),
+      OnClickEvent::Transition(new_mode)                              => OnClickEvent::Transition(new_mode.clone()),
+      OnClickEvent::MenuTransition(new_menu)                          => OnClickEvent::MenuTransition(*new_menu),
+      OnClickEvent::UseItemInMenu(new_menu, targets, item_cursor_pos) => OnClickEvent::UseItemInMenu(*new_menu, targets.to_vec(), *item_cursor_pos)
     }
   }
 }

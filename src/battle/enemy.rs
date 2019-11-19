@@ -91,7 +91,7 @@ impl Enemy {
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
     notification: &mut Option<Notification>,
-    column_length: usize
+    enemy_start_draw_height: f32
   ) -> GameResult<()> {
     self.state.update(current_turn, active_turns)?;
     if *current_turn == self.state.id && !self.turn_active {
@@ -138,7 +138,7 @@ impl Enemy {
             self.turn_active = false;
             *current_turn = 0;
             self.state.end_turn(ctx, notification, &self.name, (
-              700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
+              700. + self.x_offset + self.screen_pos.0 * 70., enemy_start_draw_height + self.screen_pos.1 * 66.
             ))?;
           },
           Animation::Hurt => {
@@ -181,7 +181,7 @@ impl Enemy {
     inventory: &mut Vec<InventoryElement>,
     notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters,
-    column_length: usize
+    enemy_start_draw_height: f32
   ) -> GameResult<()> {
     match action_parameters.damage_type {
       DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, action, notification),
@@ -189,13 +189,13 @@ impl Enemy {
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
         self.state.receive_damage(ctx, notification, &self.name, action_parameters, (
-          700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.
+          700. + self.x_offset + self.screen_pos.0 * 70., enemy_start_draw_height + self.screen_pos.1 * 66.
         ))
       }
     }
   }
 
-  pub fn draw(&mut self, ctx: &mut Context, column_length: usize) -> GameResult<()> {
+  pub fn draw(&mut self, ctx: &mut Context, enemy_start_draw_height: f32) -> GameResult<()> {
     self.spritebatch.add(
       match self.animation.0 {
         Animation::Hurt | Animation::Dead => DrawParam::new().color(Color::new(1., 1., 1., self.opacity)),
@@ -203,7 +203,7 @@ impl Enemy {
       }
     );
     let param = DrawParam::new()
-      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., 250. - column_length as f32 * 33. - self.size * 33. + self.screen_pos.1 * 66.));
+      .dest(Point2::new(700. + self.x_offset + self.screen_pos.0 * 70., enemy_start_draw_height + self.screen_pos.1 * 66.));
     draw(ctx, &self.spritebatch, param)?;
     self.spritebatch.clear();
     self.state.draw(ctx)

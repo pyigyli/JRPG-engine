@@ -4,7 +4,7 @@ use ggez::{Context, GameResult};
 use ggez::timer::ticks;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
-use crate::party::{Party, InventoryElement};
+use crate::party::InventoryElement;
 use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
 use crate::menu::item::{MenuItem, OnClickEvent};
@@ -131,7 +131,7 @@ impl Character {
           match self.animation.0 {
             Animation::StartTurn => {
               self.sprite = Sprite::StandRight;
-              *battle_menu = data::menus::battle_main(ctx, self);
+              *battle_menu = data::menus::battle_main(ctx, self, (0, 0));
             },
             Animation::EndTurn => {
               self.sprite = Sprite::StandRight;
@@ -172,9 +172,13 @@ impl Character {
     notification: &mut Option<Notification>,
     action_parameters: &mut ActionParameters
   ) -> GameResult<()> {
-    match action_parameters.damage_type {
-      DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, action, notification),
-      DamageType::Healing      => self.state.receive_healing(),
+    match &action_parameters.damage_type {
+      DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, *action, notification),
+      DamageType::Item(item)   => {
+        *notification = Some(Notification::new(ctx, item.get_name()));
+        item.apply_item_effect(&mut self.state)
+      },
+      DamageType::Healing => self.state.receive_healing(),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
         self.state.receive_damage(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.))

@@ -1,5 +1,6 @@
 use ggez::{Context, GameResult};
 use crate::GameMode;
+use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::enemy::Enemy;
 use crate::battle::state::BattleState;
 use crate::menu::{MenuScreen, MenuMovement, MenuMutation};
@@ -9,11 +10,13 @@ use crate::party::{Party, InventoryElement};
 use crate::data::menus;
 use std::cmp::min;
 
+#[derive(Clone)]
 pub enum ItemVariant {
   Potion,
   Ether
 }
 
+#[derive(Clone)]
 pub struct InventoryItem {
   variant: ItemVariant
 }
@@ -25,10 +28,20 @@ impl InventoryItem {
     }
   }
 
-  pub fn apply_item_effect(&self, targets: &mut Vec<&mut BattleState>) -> GameResult<()> {
+  pub fn apply_item_effect(&self, target: &mut BattleState) -> GameResult<()> {
     match self.variant {
-      ItemVariant::Potion => targets[0].hp = min(targets[0].hp + 100, targets[0].max_hp),
-      ItemVariant::Ether  => targets[0].mp = min(targets[0].mp + 25 , targets[0].max_mp)
+      ItemVariant::Potion => {
+        target.hp = min(target.hp + 100, target.max_hp);
+        if let Some(info) = &mut target.character_info {
+          info.hp.text = format!("{}/", target.hp);
+        }
+      },
+      ItemVariant::Ether => {
+        target.mp = min(target.mp + 25, target.max_mp);
+        if let Some(info) = &mut target.character_info {
+          info.mp.text = format!("{}/", target.mp);
+        }
+      }
     }
     Ok(())
   }
@@ -40,7 +53,7 @@ impl InventoryItem {
     }
   }
 
-  pub fn get_click_event(&self, item_cursor_pos: (usize, usize)) -> OnClickEvent {
+  pub fn get_to_menu_click_event(&self, item_cursor_pos: (usize, usize)) -> OnClickEvent {
     fn select_single_target(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, item_cursor_pos: (usize, usize)) -> MenuScreen {
       fn use_item(
         ctx: &mut Context,
@@ -58,12 +71,10 @@ impl InventoryItem {
               if format!("{} x{}", item.get_name(), amount) == menu.unselectable_items[0].text {
                 if *amount > 0 {
                   *amount -= 1;
-                  let mut target_states = Vec::new();
-                  if targets.contains(&0) {target_states.push(&mut party.first .state);}
-                  if targets.contains(&1) {target_states.push(&mut party.second.state);}
-                  if targets.contains(&2) {target_states.push(&mut party.third .state);}
-                  if targets.contains(&3) {target_states.push(&mut party.fourth.state);}
-                  item.apply_item_effect(&mut target_states)?;
+                  if targets.contains(&0) {item.apply_item_effect(&mut party.first .state)?;}
+                  if targets.contains(&1) {item.apply_item_effect(&mut party.second.state)?;}
+                  if targets.contains(&2) {item.apply_item_effect(&mut party.third .state)?;}
+                  if targets.contains(&3) {item.apply_item_effect(&mut party.fourth.state)?;}
                   if *amount == 0 {
                     out_of_selected_item = true;
                   } else {
@@ -130,6 +141,21 @@ impl InventoryItem {
     match self.variant {
       ItemVariant::Potion => OnClickEvent::ToMenuScreen(select_single_target, item_cursor_pos),
       ItemVariant::Ether  => OnClickEvent::ToMenuScreen(select_single_target, item_cursor_pos)
+    }
+  }
+
+  pub fn get_to_target_selection_click_event(&self, item_index: usize) -> OnClickEvent {
+    match self.variant {
+      ItemVariant::Potion => OnClickEvent::ToTargetSelection(
+        menus::to_target_selection,
+        ActionParameters::new(DamageType::Item(self.clone()), 0, 0., false, 0., false, 0., false),
+        (0, item_index)
+      ),
+      ItemVariant::Ether => OnClickEvent::ToTargetSelection(
+        menus::to_target_selection,
+        ActionParameters::new(DamageType::Item(self.clone()), 0, 0., false, 0., false, 0., false),
+        (0, item_index)
+      )
     }
   }
 }

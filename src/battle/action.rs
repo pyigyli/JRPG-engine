@@ -2,6 +2,7 @@ use ggez::{Context, GameResult};
 use crate::battle::state::BattleState;
 use crate::menu::notification::Notification;
 use crate::party::InventoryElement;
+use crate::party::item::InventoryItem;
 
 pub enum DamageType {
   None(for<'r, 's, 't1, 't2, 't3> fn(
@@ -11,6 +12,7 @@ pub enum DamageType {
     &'t2 mut BattleState,
     &'t3 mut Option<Notification>
   ) -> GameResult<()>),
+  Item(InventoryItem),
   Physical,
   Magical,
   Pure,
@@ -21,6 +23,7 @@ impl Clone for DamageType {
   fn clone(&self) -> Self {
     match self {
       DamageType::None(action) => DamageType::None(*action),
+      DamageType::Item(item)   => DamageType::Item(item.clone()),
       DamageType::Physical     => DamageType::Physical,
       DamageType::Magical      => DamageType::Magical,
       DamageType::Pure         => DamageType::Pure,
