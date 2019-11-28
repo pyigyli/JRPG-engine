@@ -170,13 +170,23 @@ impl Character {
     ctx: &mut Context,
     inventory: &mut Vec<InventoryElement>,
     notification: &mut Option<Notification>,
-    action_parameters: &mut ActionParameters
+    action_parameters: &mut ActionParameters,
   ) -> GameResult<()> {
     match &action_parameters.damage_type {
       DamageType::None(action) => self.state.receive_none_type_action(ctx, inventory, action_parameters, *action, notification),
-      DamageType::Item(item)   => {
-        *notification = Some(Notification::new(ctx, item.get_name()));
-        item.apply_item_effect(&mut self.state)
+      DamageType::Item(used_item) => {
+        *notification = Some(Notification::new(ctx, used_item.get_name()));
+        let position = self.state.get_damage_position((200. + self.x_offset, 50. + self.state.id as f32 * 66.));
+        for inventory_element in inventory {
+          match inventory_element {
+            InventoryElement::Item(item, amount) => {
+              if used_item.get_name() == item.get_name() && *amount > 0 {
+                *amount -= 1;
+              }
+            }
+          }
+        }
+        used_item.apply_item_effect(ctx, &mut self.state, position)
       },
       DamageType::Healing => self.state.receive_healing(),
       _ => {

@@ -127,12 +127,20 @@ pub fn battle_item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Par
   let commands = MenuContainer::new(ctx, 10., 400., 280., 300.);
   let mut selectable_items   = Vec::new();
   let mut unselectable_items = Vec::new();
-  for (index, inventory_item) in party.inventory.iter().take(6).enumerate() {
-    let (item, item_amount) = match inventory_item {
-      InventoryElement::Item(item, amount) => (item, format!("x{}", amount))
+  let mut index = 0;
+  for inventory_item in party.inventory.iter() {
+    match inventory_item {
+      InventoryElement::Item(item, amount) => {
+        if *amount > 0 {
+          selectable_items  .push(text!(ctx, item.get_name()       , 55. , 440. + index as f32 * 40., item.get_target_selection_click_event(index)));
+          unselectable_items.push(text!(ctx, format!("x{}", amount), 220., 440. + index as f32 * 40., OnClickEvent::None));
+          index += 1;
+        }
+      }
     };
-    selectable_items  .push(text!(ctx, item.get_name(), 55. , 440. + index as f32 * 40., item.get_to_target_selection_click_event(index)));
-    unselectable_items.push(text!(ctx, item_amount    , 220., 440. + index as f32 * 40., OnClickEvent::None));
+  }
+  if selectable_items.len() == 0 {
+    selectable_items.push(MenuItem::new(ctx, "/empty.png".to_owned(), "".to_owned(), (0., 0.), 0., OnClickEvent::None));
   }
   MenuScreen::new(
     ctx,

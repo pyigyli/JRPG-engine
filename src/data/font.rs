@@ -110,7 +110,7 @@ pub fn font_param(spritebatch: &mut spritebatch::SpriteBatch, text: &String) -> 
   }
 }
 
-pub fn number_param(spritebatch: &mut spritebatch::SpriteBatch, number: String, opacity: f32) -> () {
+pub fn number_param(spritebatch: &mut spritebatch::SpriteBatch, number: String, color: Color) -> () {
   for (index, character) in number.chars().enumerate() {
     let p = DrawParam::new()
       .src(
@@ -128,7 +128,7 @@ pub fn number_param(spritebatch: &mut spritebatch::SpriteBatch, number: String, 
         }
       )
       .dest(Point2::new(index as f32 * 16., 0.))
-      .color(Color::new(1., 1., 1., opacity));
+      .color(color);
     spritebatch.add(p);
   }
 }

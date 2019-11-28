@@ -1,4 +1,5 @@
 use ggez::{Context, GameResult};
+use ggez::graphics::Color;
 use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::print_damage::PrintDamage;
@@ -29,7 +30,7 @@ pub struct BattleState {
   pub common_steal: Option<InventoryItem>,
   pub rare_steal: Option<InventoryItem>,
   pub character_info: Option<CharacterInfo>,
-  print_damage: Option<PrintDamage>
+  pub print_damage: Option<PrintDamage>
 }
 
 impl BattleState {
@@ -117,7 +118,7 @@ impl BattleState {
       } else {
         self.hp = 0;
       }
-      self.print_damage = Some(PrintDamage::new(ctx, poison_damage, self.get_damage_position(position)));
+      self.print_damage = Some(PrintDamage::new(ctx, poison_damage, self.get_damage_position(position), Color::new(1., 1., 1., 1.)));
       if let Some(info) = &mut self.character_info {
         if self.poisoned == 0 {info.remove_effect("poison".to_owned())?;}
         info.hp.text = format!("{}/", self.hp);
@@ -188,7 +189,7 @@ impl BattleState {
       }
       self.sleeping = 3;
     }
-    self.print_damage = Some(PrintDamage::new(ctx, damage, self.get_damage_position(position)));
+    self.print_damage = Some(PrintDamage::new(ctx, damage, self.get_damage_position(position), Color::new(1., 1., 1., 1.)));
     Ok(())
   }
 
@@ -223,7 +224,7 @@ impl BattleState {
     Ok(())
   }
 
-  fn get_damage_position(&self, position: (f32, f32)) -> (f32, f32) {
+  pub fn get_damage_position(&self, position: (f32, f32)) -> (f32, f32) {
     let mut damage_position = position;
     if let Some(_) = &self.character_info {
       damage_position.0 += 40.;

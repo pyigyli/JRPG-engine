@@ -1,7 +1,9 @@
 use ggez::{Context, GameResult};
+use ggez::graphics::Color;
 use crate::GameMode;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::enemy::Enemy;
+use crate::battle::print_damage::PrintDamage;
 use crate::battle::state::BattleState;
 use crate::menu::{MenuScreen, MenuMovement, MenuMutation};
 use crate::menu::container::MenuContainer;
@@ -28,20 +30,21 @@ impl InventoryItem {
     }
   }
 
-  pub fn apply_item_effect(&self, target: &mut BattleState) -> GameResult<()> {
-    match self.variant {
+  pub fn apply_item_effect(&self, ctx: &mut Context, target: &mut BattleState, position: (f32, f32)) -> GameResult<()> { // negative position.0 mean no battle
+    let (print_damage, print_color) = match self.variant {
       ItemVariant::Potion => {
         target.hp = min(target.hp + 100, target.max_hp);
-        if let Some(info) = &mut target.character_info {
-          info.hp.text = format!("{}/", target.hp);
-        }
+        if let Some(info) = &mut target.character_info {info.hp.text = format!("{}/", target.hp);}
+        (100, Color::new(0., 1., 0., 1.))
       },
       ItemVariant::Ether => {
         target.mp = min(target.mp + 25, target.max_mp);
-        if let Some(info) = &mut target.character_info {
-          info.mp.text = format!("{}/", target.mp);
-        }
+        if let Some(info) = &mut target.character_info {info.mp.text = format!("{}/", target.mp);}
+        (25, Color::new(0., 0., 1., 1.))
       }
+    };
+    if position.0 >= 0. {
+      target.print_damage = Some(PrintDamage::new(ctx, print_damage, target.get_damage_position(position), print_color));
     }
     Ok(())
   }
@@ -68,20 +71,18 @@ impl InventoryItem {
         for inventory_element in &mut party.inventory {
           match inventory_element {
             InventoryElement::Item(item, amount) => {
-              if format!("{} x{}", item.get_name(), amount) == menu.unselectable_items[0].text {
-                if *amount > 0 {
-                  *amount -= 1;
-                  if targets.contains(&0) {item.apply_item_effect(&mut party.first .state)?;}
-                  if targets.contains(&1) {item.apply_item_effect(&mut party.second.state)?;}
-                  if targets.contains(&2) {item.apply_item_effect(&mut party.third .state)?;}
-                  if targets.contains(&3) {item.apply_item_effect(&mut party.fourth.state)?;}
-                  if *amount == 0 {
-                    out_of_selected_item = true;
-                  } else {
-                    for element in &mut menu.unselectable_items {
-                      if element.text == format!("{} x{}", item.get_name(), *amount + 1) {
-                        element.text = format!("{} x{}", item.get_name(), amount);
-                      }
+              if format!("{} x{}", item.get_name(), amount) == menu.unselectable_items[0].text && *amount > 0 {
+                *amount -= 1;
+                if targets.contains(&0) {item.apply_item_effect(ctx, &mut party.first .state, (-1., 0.))?;}
+                if targets.contains(&1) {item.apply_item_effect(ctx, &mut party.second.state, (-1., 0.))?;}
+                if targets.contains(&2) {item.apply_item_effect(ctx, &mut party.third .state, (-1., 0.))?;}
+                if targets.contains(&3) {item.apply_item_effect(ctx, &mut party.fourth.state, (-1., 0.))?;}
+                if *amount == 0 {
+                  out_of_selected_item = true;
+                } else {
+                  for element in &mut menu.unselectable_items {
+                    if element.text == format!("{} x{}", item.get_name(), *amount + 1) {
+                      element.text = format!("{} x{}", item.get_name(), amount);
                     }
                   }
                 }
@@ -144,7 +145,7 @@ impl InventoryItem {
     }
   }
 
-  pub fn get_to_target_selection_click_event(&self, item_index: usize) -> OnClickEvent {
+  pub fn get_target_selection_click_event(&self, item_index: usize) -> OnClickEvent {
     match self.variant {
       ItemVariant::Potion => OnClickEvent::ToTargetSelection(
         menus::to_target_selection,

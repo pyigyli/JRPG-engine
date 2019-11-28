@@ -3,8 +3,8 @@ use crate::menu::item::{MenuItem, OnClickEvent};
 
 pub struct CharacterInfo {
   pub name: MenuItem,
-  max_hp: MenuItem,
-  max_mp: MenuItem,
+  pub max_hp: MenuItem,
+  pub max_mp: MenuItem,
   pub hp: MenuItem,
   pub mp: MenuItem,
   pub atb: u8,
