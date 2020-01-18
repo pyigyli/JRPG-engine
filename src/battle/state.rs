@@ -7,7 +7,7 @@ use crate::party::InventoryElement;
 use crate::party::character_info::CharacterInfo;
 use crate::party::item::InventoryItem;
 use crate::menu::notification::Notification;
-use std::cmp::max;
+use std::cmp::{min, max};
 
 pub struct BattleState {
   pub id: u8,
@@ -193,7 +193,18 @@ impl BattleState {
     Ok(())
   }
 
-  pub fn receive_healing(&mut self) -> GameResult<()> {
+  pub fn receive_healing(
+    &mut self,
+    ctx: &mut Context,
+    notification: &mut Option<Notification>,
+    name: &String,
+    action_parameters: &ActionParameters,
+    position: (f32, f32)
+  ) -> GameResult<()> {
+    let heal_amount = action_parameters.power * self.magic;
+    self.hp = min(self.hp + heal_amount, self.max_hp);
+    if let Some(info) = &mut self.character_info {info.hp.text = format!("{}/", self.hp);}
+    self.print_damage = Some(PrintDamage::new(ctx, heal_amount, self.get_damage_position(position), Color::new(0., 1., 0., 1.)));
     Ok(())
   }
 

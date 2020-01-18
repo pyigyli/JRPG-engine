@@ -188,7 +188,7 @@ impl Character {
         }
         used_item.apply_item_effect(ctx, &mut self.state, position)
       },
-      DamageType::Healing => self.state.receive_healing(),
+      DamageType::Healing => self.state.receive_healing(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.)),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
         self.state.receive_damage(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.))

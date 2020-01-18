@@ -199,7 +199,9 @@ impl Enemy {
         }
         used_item.apply_item_effect(ctx, &mut self.state, position)
       },
-      DamageType::Healing => self.state.receive_healing(),
+      DamageType::Healing => self.state.receive_healing(ctx, notification, &self.name, action_parameters, (
+          700. + self.x_offset + self.screen_pos.0 * 70., enemy_start_draw_height + self.screen_pos.1 * 66.
+        )),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
         self.state.receive_damage(ctx, notification, &self.name, action_parameters, (

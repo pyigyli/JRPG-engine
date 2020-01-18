@@ -89,7 +89,7 @@ pub fn nurse_seraphine(ctx: &mut Context, id: u8) -> Character {
     menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false), (0, 0)
   ));
   let primary_ability = ("Medicine".to_owned(), OnClickEvent::ToTargetSelection(
-    menus::to_target_selection, ActionParameters::new(DamageType::Physical, 4, 0., false, 0., false, 0., false), (0, 1)
+    menus::to_target_selection, ActionParameters::new(DamageType::Healing, 4, 0., false, 0., false, 0., false), (0, 1)
   ));
   let secondary_ability = ("asdf".to_owned(), OnClickEvent::None);
   Character::new(
