@@ -1,5 +1,5 @@
 use ggez::{Context, GameResult};
-use ggez::graphics::Color;
+use ggez::graphics::{Color, DrawParam, DrawMode, FillOptions, Mesh, Rect, draw};
 use rand::{Rng, thread_rng};
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::print_damage::PrintDamage;
@@ -88,7 +88,6 @@ impl BattleState {
           self.atb = sum;
         } else {
           active_turns.push(self.id);
-          self.atb = 0;
         }
       }
     }
@@ -140,6 +139,7 @@ impl BattleState {
         if self.sleeping == 0 {info.remove_effect("poison".to_owned())?;}
       }
     }
+    self.atb = 0;
     Ok(())
   }
 
@@ -172,6 +172,7 @@ impl BattleState {
         info.hp.text = format!("{}", 0);
       }
     }
+    let mut new_effects = Vec::<String>::new();
     if self.poisoned >= 0 && rng.gen::<f32>() < action_parameters.poison_change {
       if let Some(info) = &mut self.character_info {
         if self.poisoned == 0 {
@@ -179,7 +180,7 @@ impl BattleState {
         }
       }
       self.poisoned = 5;
-      *notification = Some(Notification::new(ctx, format!("{} is poisoned", name)))
+      new_effects.push("poisoned".to_owned());
     }
     if self.sleeping >= 0 && rng.gen::<f32>() < action_parameters.sleep_change {
       if let Some(info) = &mut self.character_info {
@@ -188,6 +189,24 @@ impl BattleState {
         }
       }
       self.sleeping = 3;
+      new_effects.push("fell asleep".to_owned());
+    }
+    if new_effects.len() > 0 {
+      let mut notification_text = format!("{} is", name);
+      if new_effects.len() == 1 {
+        notification_text = format!("{} {}", notification_text, new_effects[0]);
+      } else {
+        for (index, element) in new_effects.iter().enumerate() {
+          if index == 0 {
+            notification_text = format!("{} {}", notification_text, new_effects[index]);
+          } else if index < new_effects.len() - 2 {
+            notification_text = format!("{}, {}", notification_text, new_effects[index]);
+          } else {
+            notification_text = format!("{} and {}", notification_text, new_effects[index]);
+          }
+        }
+      }
+      *notification = Some(Notification::new(ctx, notification_text));
     }
     self.print_damage = Some(PrintDamage::new(ctx, damage, self.get_damage_position(position), Color::new(1., 1., 1., 1.)));
     Ok(())
@@ -228,6 +247,24 @@ impl BattleState {
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     if let Some(character_info) = &mut self.character_info {
       character_info.draw(ctx)?;
+      let atb_ticks = Mesh::new_rectangle(ctx, DrawMode::Fill(
+        FillOptions::default()),
+        Rect::new(900., 400. + self.id as f32 * 62., self.atb as f32 / 2. + 1., 24.),
+        Color::new(1., 1., 1., 1.)
+      ).unwrap();
+      let atb_left_edge = Mesh::new_rectangle(ctx, DrawMode::Fill(
+        FillOptions::default()),
+        Rect::new(892., 400. + self.id as f32 * 62., 4., 24.),
+        Color::new(1., 1., 1., 1.)
+      ).unwrap();
+      let atb_right_edge = Mesh::new_rectangle(ctx, DrawMode::Fill(
+        FillOptions::default()),
+        Rect::new(1032., 400. + self.id as f32 * 62., 4., 24.),
+        Color::new(1., 1., 1., 1.)
+      ).unwrap();
+      draw(ctx, &atb_ticks, DrawParam::new())?;
+      draw(ctx, &atb_left_edge, DrawParam::new())?;
+      draw(ctx, &atb_right_edge, DrawParam::new())?;
     }
     if let Some(print_damage) = &mut self.print_damage {
       print_damage.draw(ctx)?;
