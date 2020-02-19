@@ -45,12 +45,13 @@ impl Party {
     battle_menu: &mut MenuScreen,
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
-    notification: &mut Option<Notification>
+    notification: &mut Option<Notification>,
+    transition: &mut Transition
   ) -> GameResult<()> {
-    self.first .update(ctx, battle_menu, active_turns, current_turn, notification)?;
-    self.second.update(ctx, battle_menu, active_turns, current_turn, notification)?;
-    self.third .update(ctx, battle_menu, active_turns, current_turn, notification)?;
-    self.fourth.update(ctx, battle_menu, active_turns, current_turn, notification)?;
+    self.first .update(ctx, battle_menu, active_turns, current_turn, notification, transition)?;
+    self.second.update(ctx, battle_menu, active_turns, current_turn, notification, transition)?;
+    self.third .update(ctx, battle_menu, active_turns, current_turn, notification, transition)?;
+    self.fourth.update(ctx, battle_menu, active_turns, current_turn, notification, transition)?;
     Ok(())
   }
 

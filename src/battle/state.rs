@@ -198,11 +198,11 @@ impl BattleState {
       } else {
         for (index, element) in new_effects.iter().enumerate() {
           if index == 0 {
-            notification_text = format!("{} {}", notification_text, new_effects[index]);
+            notification_text = format!("{} {}", notification_text, element);
           } else if index < new_effects.len() - 2 {
-            notification_text = format!("{}, {}", notification_text, new_effects[index]);
+            notification_text = format!("{}, {}", notification_text, element);
           } else {
-            notification_text = format!("{} and {}", notification_text, new_effects[index]);
+            notification_text = format!("{} and {}", notification_text, element);
           }
         }
       }
@@ -215,8 +215,6 @@ impl BattleState {
   pub fn receive_healing(
     &mut self,
     ctx: &mut Context,
-    notification: &mut Option<Notification>,
-    name: &String,
     action_parameters: &ActionParameters,
     position: (f32, f32)
   ) -> GameResult<()> {

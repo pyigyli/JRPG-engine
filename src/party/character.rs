@@ -2,6 +2,7 @@ use ggez::graphics::{spritebatch, Image, DrawParam, Rect, draw, Color};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
 use ggez::timer::ticks;
+use crate::GameMode;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
 use crate::party::InventoryElement;
@@ -9,6 +10,7 @@ use crate::party::character_info::CharacterInfo;
 use crate::menu::MenuScreen;
 use crate::menu::item::{MenuItem, OnClickEvent};
 use crate::menu::notification::Notification;
+use crate::transition::{Transition, TransitionStyle};
 use crate::data;
 
 pub enum Animation {
@@ -16,7 +18,8 @@ pub enum Animation {
   EndTurn, // 12 frames
   Attack, // 60 frames
   Hurt, // 60 frames
-  Dead // 20 frames
+  Dead, // 20 frames
+  Flee // 80 frames
 }
 
 pub enum Sprite {
@@ -92,7 +95,8 @@ impl Character {
     battle_menu: &mut MenuScreen,
     active_turns: &mut Vec<u8>,
     current_turn: &mut u8,
-    notification: &mut Option<Notification>
+    notification: &mut Option<Notification>,
+    transition: &mut Transition
   ) -> GameResult<()> {
     if self.name.len() > 0 {
       self.state.update(current_turn, active_turns)?;
@@ -114,7 +118,8 @@ impl Character {
         match self.animation.0 {
           Animation::StartTurn => self.x_offset += 3.,
           Animation::EndTurn   => self.x_offset -= 3.,
-          Animation::Hurt => {
+          Animation::Flee      => self.x_offset -= 10.,
+          Animation::Hurt      => {
             let animation_time = ticks(ctx) - self.animation.2;
             if animation_time > 10 && animation_time <= 30 {
               if (animation_time) % 10 == 0 {
@@ -157,7 +162,11 @@ impl Character {
                 *notification = Some(Notification::new(ctx, format!("{} dead", self.name)));
               }
             },
-            Animation::Dead => self.sprite = Sprite::Dead
+            Animation::Dead => self.sprite = Sprite::Dead,
+            Animation::Flee => {
+              self.sprite = Sprite::StandRight;
+              transition.set(TransitionStyle::BlackInFast(GameMode::Map))?;
+            }
           }
         }
       }
@@ -188,7 +197,7 @@ impl Character {
         }
         used_item.apply_item_effect(ctx, &mut self.state, position)
       },
-      DamageType::Healing => self.state.receive_healing(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.)),
+      DamageType::Healing => self.state.receive_healing(ctx, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.)),
       _ => {
         self.animation = (Animation::Hurt, 60, ticks(ctx));
         self.state.receive_damage(ctx, notification, &self.name, action_parameters, (200. + self.x_offset, 50. + self.state.id as f32 * 66.))

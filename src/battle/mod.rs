@@ -73,7 +73,7 @@ impl Battle {
             self.current_turn = next_turn;
           }
         }
-        party.update(ctx, battle_menu, &mut self.active_turns, &mut self.current_turn, &mut self.notification)?;
+        party.update(ctx, battle_menu, &mut self.active_turns, &mut self.current_turn, &mut self.notification, transition)?;
         battle_menu.update(ctx, mode, party, self, transition)?;
       }
       let mut dead_enemies = Vec::new();

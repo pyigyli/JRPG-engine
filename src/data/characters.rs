@@ -1,9 +1,11 @@
 use ggez::{Context, GameResult};
+use ggez::timer::ticks;
 use rand::{Rng, thread_rng};
+use crate::battle::Battle;
 use crate::battle::action::{ActionParameters, DamageType};
 use crate::battle::state::BattleState;
-use crate::party::InventoryElement;
-use crate::party::character::Character;
+use crate::party::{Party, InventoryElement};
+use crate::party::character::{Character, Animation, Sprite};
 use crate::menu::item::OnClickEvent;
 use crate::menu::notification::Notification;
 use crate::data::menus;
@@ -60,10 +62,43 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
     }
     Ok(())
   }
+  fn flee_action(ctx: &mut Context, party: &mut Party, battle: &mut Battle) -> GameResult<()> {
+    let mut escapeable = false;
+    for enemy_column in &battle.enemies {
+      for enemy in enemy_column {
+        if enemy.escapeable {
+          escapeable = true;
+        }
+      }
+    }
+    let rng = thread_rng().gen::<f32>();
+    if escapeable && rng < 0.8 {
+      if party.first .state.hp > 0 {
+        party.first.sprite = Sprite::WalkLeft;
+        party.first.animation = (Animation::Flee, 80, ticks(ctx))
+      }
+      if party.second.state.hp > 0 {
+        party.second.sprite = Sprite::WalkLeft;
+        party.second.animation = (Animation::Flee, 80, ticks(ctx))
+      }
+      if party.third .state.hp > 0 {
+        party.third.sprite = Sprite::WalkLeft;
+        party.third.animation = (Animation::Flee, 80, ticks(ctx))
+      }
+      if party.fourth.state.hp > 0 {
+        party.fourth.sprite = Sprite::WalkLeft;
+        party.fourth.animation = (Animation::Flee, 80, ticks(ctx))
+      }
+      battle.notification = Some(Notification::new(ctx, "Party escaped the battle".to_owned()));
+    } else {
+      battle.notification = Some(Notification::new(ctx, "Could not manage to flee".to_owned()));
+    }
+    Ok(())
+  }
   let primary_ability = ("Steal".to_owned(), OnClickEvent::ToTargetSelection(
     menus::to_target_selection, ActionParameters::new(DamageType::None(steal_action), 0, 0., false, 0., false, 0., false), (0, 1)
   ));
-  let secondary_ability = ("Flee".to_owned(), OnClickEvent::None);
+  let secondary_ability = ("Flee".to_owned(), OnClickEvent::BattleAction(flee_action));
   Character::new(
     ctx,
     id,

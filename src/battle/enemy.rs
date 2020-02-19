@@ -39,6 +39,7 @@ pub struct Enemy {
   pub name: String,
   pub state: BattleState,
   pub dead: bool,
+  pub escapeable: bool,
   turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>
 }
 
@@ -64,6 +65,7 @@ impl Enemy {
     rare_steal: Option<InventoryItem>,
     poisoned: i8,
     sleeping: i8,
+    escapeable: bool,
     turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>,
   ) -> Enemy {
     let image = Image::new(ctx, spritefile).unwrap();
@@ -80,6 +82,7 @@ impl Enemy {
       name,
       state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, common_steal, rare_steal, poisoned, sleeping, None),
       dead: false,
+      escapeable,
       turn_action
     }
   }
@@ -199,7 +202,7 @@ impl Enemy {
         }
         used_item.apply_item_effect(ctx, &mut self.state, position)
       },
-      DamageType::Healing => self.state.receive_healing(ctx, notification, &self.name, action_parameters, (
+      DamageType::Healing => self.state.receive_healing(ctx, action_parameters, (
           700. + self.x_offset + self.screen_pos.0 * 70., enemy_start_draw_height + self.screen_pos.1 * 66.
         )),
       _ => {

@@ -106,6 +106,10 @@ impl MenuScreen {
           OnClickEvent::Transition(new_mode)                              => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
           OnClickEvent::MenuTransition(new_menu)                          => transition.set(TransitionStyle::MenuIn(*new_menu))?,
           OnClickEvent::UseItemInMenu(mutation, targets, item_cursor_pos) => self.mutation = MenuMutation::UseItemInMenu(*mutation, targets.to_vec(), *item_cursor_pos),
+          OnClickEvent::BattleAction(action) => {
+            self.open = false;
+            action(ctx, party, battle)?;
+          },
           OnClickEvent::None => ()
         }
       } else if !keyboard::is_key_pressed(ctx, KeyCode::A) {

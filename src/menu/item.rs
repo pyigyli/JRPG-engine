@@ -4,6 +4,7 @@ use ggez::{Context, GameResult};
 use crate::GameMode;
 use crate::data::font::font_param;
 use crate::party::Party;
+use crate::battle::Battle;
 use crate::battle::action::ActionParameters;
 use crate::battle::enemy::Enemy;
 use crate::menu::MenuScreen;
@@ -32,7 +33,8 @@ pub enum OnClickEvent {
     ) -> GameResult<()>,
     Vec<u8>,
     (usize, usize)
-  )
+  ),
+  BattleAction(for<'r, 's, 't> fn(&'r mut Context, &'s mut Party, &'t mut Battle) -> GameResult<()>)
 }
 
 impl Clone for OnClickEvent {
@@ -47,7 +49,8 @@ impl Clone for OnClickEvent {
       OnClickEvent::MutateMenu(mutation)                              => OnClickEvent::MutateMenu(*mutation),
       OnClickEvent::Transition(new_mode)                              => OnClickEvent::Transition(new_mode.clone()),
       OnClickEvent::MenuTransition(new_menu)                          => OnClickEvent::MenuTransition(*new_menu),
-      OnClickEvent::UseItemInMenu(new_menu, targets, item_cursor_pos) => OnClickEvent::UseItemInMenu(*new_menu, targets.to_vec(), *item_cursor_pos)
+      OnClickEvent::UseItemInMenu(new_menu, targets, item_cursor_pos) => OnClickEvent::UseItemInMenu(*new_menu, targets.to_vec(), *item_cursor_pos),
+      OnClickEvent::BattleAction(action)                              => OnClickEvent::BattleAction(*action)
     }
   }
 }
