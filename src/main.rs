@@ -81,7 +81,7 @@ impl EventHandler for GameState {
     if self.transition.style != TransitionStyle::None {
       self.transition.draw(ctx)?;
     }
-    sleep(Duration::new(0, 16666666));
+    sleep(Duration::new(0, 1));
     graphics::present(ctx)
   }
 }

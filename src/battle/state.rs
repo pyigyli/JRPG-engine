@@ -11,7 +11,7 @@ use std::cmp::{min, max};
 
 pub struct BattleState {
   pub id: u8,
-  level: u8,
+  pub level: u8,
   pub experience: u32,
   pub max_hp: u16,
   pub max_mp: u16,
@@ -77,7 +77,7 @@ impl BattleState {
   }
 
   pub fn update(&mut self, current_turn: &mut u8, active_turns: &mut Vec<u8>) -> GameResult<()> {
-    if self.hp == 0 {
+    if self.hp == 0 || self.sleeping > 0 {
       self.atb = 0;
       self.atb_subtick = 0;
     } else if *current_turn == 0 {

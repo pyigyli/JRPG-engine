@@ -12,7 +12,7 @@ pub fn none_menu(ctx: &mut Context) -> MenuScreen {
   MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), MenuMovement::Grid, OnClickEvent::None)
 }
 
-pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
   let submenu_selection = MenuContainer::new(ctx, 10. , 10., 250., 300.);
   let character_info    = MenuContainer::new(ctx, 275., 10., 795., 700.);
   fn to_item_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
@@ -22,6 +22,51 @@ pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _e
   let ability = text!(ctx, "Ability", 55., 100., OnClickEvent::None);
   let equip   = text!(ctx, "Equip"  , 55., 140., OnClickEvent::None);
   let config  = text!(ctx, "Config" , 55., 180., OnClickEvent::None);
+  let mut unselectable_items = Vec::new();
+  fn push_party_memeber_to_unselectables(ctx: &mut Context, vector: &mut Vec<MenuItem>, character: &Character) {
+    if character.name.len() > 0 {
+      vector.push(MenuItem::new(ctx, character.avatar_spritefile.to_owned(), "".to_owned(), (320., 52. + (character.state.id - 1) as f32 * 162.), 128., OnClickEvent::None));
+      vector.push(MenuItem::new(ctx, "".to_owned(), format!("Lvl {}", character.state.level), (460., 60. + (character.state.id - 1) as f32 * 162.), 24., OnClickEvent::None));
+      vector.push(MenuItem::new(ctx, "".to_owned(), character.name.to_owned(), (640., 60. + (character.state.id - 1) as f32 * 162.), 24., OnClickEvent::None));
+      vector.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}/", character.state.hp),
+        (460. + (5 - format!("{}/", character.state.hp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        24.,
+        OnClickEvent::None
+      ));
+      vector.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}/", character.state.mp),
+        (796. + (4 - format!("{}/", character.state.mp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        24.,
+        OnClickEvent::None
+      ));
+      vector.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{} Hp", character.state.hp),
+        (580. + (4 - format!("{}" , character.state.hp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        24.,
+        OnClickEvent::None
+      ));
+      vector.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{} Mp",
+        character.state.mp),
+        (892. + (3 - format!("{}" ,character.state.mp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        24.,
+        OnClickEvent::None
+      ));
+    }
+  }
+  push_party_memeber_to_unselectables(ctx, &mut unselectable_items, &party.first);
+  push_party_memeber_to_unselectables(ctx, &mut unselectable_items, &party.second);
+  push_party_memeber_to_unselectables(ctx, &mut unselectable_items, &party.third);
+  push_party_memeber_to_unselectables(ctx, &mut unselectable_items, &party.fourth);
   MenuScreen::new(
     ctx,
     true,
@@ -29,7 +74,7 @@ pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, _party: &mut Party, _e
     vec![
       vec![item, ability, equip, config]
     ],
-    Vec::new(),
+    unselectable_items,
     (0, 0),
     MenuMovement::RowOfColumns,
     OnClickEvent::Transition(GameMode::Map)
@@ -49,7 +94,7 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
   let container = MenuContainer::new(ctx, 10. , 10., 1060., 700.);
   let mut first_item_column  = Vec::new();
   let mut second_item_column = Vec::new();
-  let mut unselectables      = Vec::new();
+  let mut unselectable_items = Vec::new();
   for (index, element) in party.inventory.iter_mut().enumerate() {
     let (element_name, element_amount, click_event) = match element {
       InventoryElement::Item(item, amount) => (item.get_name(), amount, item.get_to_menu_click_event((index % 2, index / 2)))
@@ -58,10 +103,10 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
     if *element_amount > 0 {
       if index % 2 == 0 {
         first_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, (0. + 100., item_height), 24., click_event));
-        unselectables.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (400. + 100., item_height), 24., OnClickEvent::None));
+        unselectable_items.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (400. + 100., item_height), 24., OnClickEvent::None));
       } else {
         second_item_column.push(MenuItem::new(ctx, "".to_owned(), element_name, (500. + 100., item_height), 24., click_event));
-        unselectables.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (900. + 100., item_height), 24., OnClickEvent::None));
+        unselectable_items.push(MenuItem::new(ctx, "".to_owned(), format!("{}", element_amount), (900. + 100., item_height), 24., OnClickEvent::None));
       }
     }
   }
@@ -82,7 +127,7 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
     true,
     vec![container],
     selectable_items,
-    unselectables,
+    unselectable_items,
     cursor_start,
     MenuMovement::Grid,
     OnClickEvent::MenuTransition(main_menu)

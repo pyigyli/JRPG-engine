@@ -73,7 +73,7 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
     }
     let rng = thread_rng().gen::<f32>();
     if escapeable && rng < 0.8 {
-      if party.first .state.hp > 0 {
+      if party.first.state.hp > 0 {
         party.first.sprite = Sprite::WalkLeft;
         party.first.animation = (Animation::Flee, 80, ticks(ctx))
       }
@@ -81,7 +81,7 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
         party.second.sprite = Sprite::WalkLeft;
         party.second.animation = (Animation::Flee, 80, ticks(ctx))
       }
-      if party.third .state.hp > 0 {
+      if party.third.state.hp > 0 {
         party.third.sprite = Sprite::WalkLeft;
         party.third.animation = (Animation::Flee, 80, ticks(ctx))
       }

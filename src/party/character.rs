@@ -38,7 +38,7 @@ pub enum Sprite {
 
 pub struct Character {
   spritebatch: spritebatch::SpriteBatch,
-  avatar_spritefile: String,
+  pub avatar_spritefile: String,
   opacity: f32,
   pub animation: (Animation, usize, usize), // (Animation, length, starting tick)
   pub sprite: Sprite,
