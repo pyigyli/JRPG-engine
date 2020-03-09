@@ -61,10 +61,11 @@ impl Enemy {
     resistance: u16,
     agility: u8,
     experience: u32,
-    common_steal: Option<InventoryItem>,
-    rare_steal: Option<InventoryItem>,
     poisoned: i8,
     sleeping: i8,
+    back_row: bool,
+    common_steal: Option<InventoryItem>,
+    rare_steal: Option<InventoryItem>,
     escapeable: bool,
     turn_action: for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut Enemy, &'t0 mut Party, &'t1 mut Option<Notification>) -> GameResult<()>,
   ) -> Enemy {
@@ -80,7 +81,7 @@ impl Enemy {
       animation: (Animation::EndTurn, 0, 0),
       x_offset: 0.,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, common_steal, rare_steal, poisoned, sleeping, None),
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, experience, poisoned, sleeping, back_row, common_steal, rare_steal, None),
       dead: false,
       escapeable,
       turn_action

@@ -86,10 +86,10 @@ impl MenuScreen {
     transition: &mut Transition
   ) -> GameResult<()> {
     if *mode == GameMode::Map && keyboard::is_key_pressed(ctx, KeyCode::F) {
-      fn to_main_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-        menus::main_menu(ctx, mode, party, enemies)
+      fn to_main_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+        menus::main_menu(ctx, mode, party, enemies, cursor_start)
       }
-      transition.set(TransitionStyle::MenuIn(to_main_menu))?;
+      transition.set(TransitionStyle::MenuIn(to_main_menu, (0, 0)))?;
     } else if self.open {
       if keyboard::is_key_pressed(ctx, KeyCode::A) && !self.input_cooldowns.a {
         self.input_cooldowns.a = true;
@@ -104,7 +104,7 @@ impl MenuScreen {
           },
           OnClickEvent::MutateMenu(mutation)                              => self.mutation = MenuMutation::DefaultMutation(*mutation),
           OnClickEvent::Transition(new_mode)                              => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
-          OnClickEvent::MenuTransition(new_menu)                          => transition.set(TransitionStyle::MenuIn(*new_menu))?,
+          OnClickEvent::MenuTransition(new_menu, cursor_start)            => transition.set(TransitionStyle::MenuIn(*new_menu, *cursor_start))?,
           OnClickEvent::UseItemInMenu(mutation, targets, item_cursor_pos) => self.mutation = MenuMutation::UseItemInMenu(*mutation, targets.to_vec(), *item_cursor_pos),
           OnClickEvent::BattleAction(action) => {
             self.open = false;
@@ -118,9 +118,9 @@ impl MenuScreen {
       if keyboard::is_key_pressed(ctx, KeyCode::S) && !self.input_cooldowns.s {
         self.input_cooldowns.s = true;
         match &self.return_action {
-          OnClickEvent::ToMenuScreen(new_menu, cursor_start) => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
-          OnClickEvent::Transition(new_mode)                 => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
-          OnClickEvent::MenuTransition(new_menu)             => transition.set(TransitionStyle::MenuIn(*new_menu))?,
+          OnClickEvent::ToMenuScreen(new_menu, cursor_start)   => *self = new_menu(ctx, mode, party, &battle.enemies, *cursor_start),
+          OnClickEvent::Transition(new_mode)                   => transition.set(TransitionStyle::BlackInFast(new_mode.clone()))?,
+          OnClickEvent::MenuTransition(new_menu, cursor_start) => transition.set(TransitionStyle::MenuIn(*new_menu, *cursor_start))?,
           _ => ()
         }
       } else if !keyboard::is_key_pressed(ctx, KeyCode::S) {

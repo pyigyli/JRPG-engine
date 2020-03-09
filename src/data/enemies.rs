@@ -57,10 +57,11 @@ pub fn test_triangle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selectio
     2,
     2,
     15,
+    0,
+    0,
+    false,
     Some(InventoryItem::new(ItemVariant::Potion)),
     Some(InventoryItem::new(ItemVariant::Ether)),
-    0,
-    0,
     true,
     turn_action
   )
@@ -84,10 +85,11 @@ pub fn test_circle(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_
     2,
     3,
     7,
+    0,
+    0,
+    false,
     Some(InventoryItem::new(ItemVariant::Potion)),
     Some(InventoryItem::new(ItemVariant::Ether)),
-    0,
-    0,
     true,
     turn_action
   )
@@ -111,10 +113,11 @@ pub fn test_square(ctx: &mut Context, id: u8, screen_pos: (f32, f32), selection_
     2,
     3,
     8,
+    0,
+    0,
+    false,
     Some(InventoryItem::new(ItemVariant::Potion)),
     Some(InventoryItem::new(ItemVariant::Ether)),
-    0,
-    0,
     true,
     turn_action
   )

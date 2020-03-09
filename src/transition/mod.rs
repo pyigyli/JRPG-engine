@@ -14,7 +14,7 @@ pub enum TransitionStyle {
   WhiteOutFast,
   BlackInFast(GameMode),
   BlackOutFast,
-  MenuIn(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>) -> MenuScreen),
+  MenuIn(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>, (usize, usize)) -> MenuScreen, (usize, usize)),
   MenuOut
 }
 
@@ -26,7 +26,7 @@ impl PartialEq for TransitionStyle {
       TransitionStyle::WhiteOutFast   => {match other {TransitionStyle::WhiteOutFast   => true, _ => false}},
       TransitionStyle::BlackInFast(_) => {match other {TransitionStyle::BlackInFast(_) => true, _ => false}},
       TransitionStyle::BlackOutFast   => {match other {TransitionStyle::BlackOutFast   => true, _ => false}},
-      TransitionStyle::MenuIn(_)      => {match other {TransitionStyle::MenuIn(_)      => true, _ => false}},
+      TransitionStyle::MenuIn(_, _)   => {match other {TransitionStyle::MenuIn(_, _)   => true, _ => false}},
       TransitionStyle::MenuOut        => {match other {TransitionStyle::MenuOut        => true, _ => false}}
     }
   }
@@ -92,11 +92,11 @@ impl Transition {
           done = true;
         }
       },
-      TransitionStyle::MenuIn(get_menu) => {
+      TransitionStyle::MenuIn(new_menu, cursor_start) => {
         self.opacity += 0.1;
         self.opacity *= 0.95;
         if self.opacity > 1. {
-          *menu = get_menu(ctx, mode, party, enemies);
+          *menu = new_menu(ctx, mode, party, enemies, *cursor_start);
           *mode = GameMode::Menu;
           done = true;
         }
@@ -113,7 +113,7 @@ impl Transition {
       self.style = match &self.style {
         TransitionStyle::WhiteInFast(_) => TransitionStyle::WhiteOutFast,
         TransitionStyle::BlackInFast(_) => TransitionStyle::BlackOutFast,
-        TransitionStyle::MenuIn(_)      => TransitionStyle::MenuOut,
+        TransitionStyle::MenuIn(_, _)   => TransitionStyle::MenuOut,
         _ => {
           match mode {
             GameMode::Map => *menu = menus::none_menu(ctx),
@@ -129,14 +129,17 @@ impl Transition {
   pub fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
     match &self.style {
       TransitionStyle::None => (),
-      TransitionStyle::WhiteInFast(_) | TransitionStyle::WhiteOutFast => {
+      TransitionStyle::WhiteInFast(_) |
+      TransitionStyle::WhiteOutFast => {
         let rectangle = Rect::new(-WINDOW_SIZE.0, -WINDOW_SIZE.1, WINDOW_SIZE.0 * 2., WINDOW_SIZE.1 * 2.);
         let color = Color::new(1., 1., 1., self.opacity);
         let mesh = Mesh::new_rectangle(ctx, DrawMode::fill(), rectangle, color).unwrap();
         draw(ctx, &mesh, DrawParam::new().dest(Point2::new(0., 0.)))?;
       },
-      TransitionStyle::BlackInFast(_) | TransitionStyle::BlackOutFast |
-      TransitionStyle::MenuIn(_)      | TransitionStyle::MenuOut      => {
+      TransitionStyle::BlackInFast(_) |
+      TransitionStyle::BlackOutFast   |
+      TransitionStyle::MenuIn(_, _)   |
+      TransitionStyle::MenuOut => {
         let rectangle = Rect::new(-WINDOW_SIZE.0, -WINDOW_SIZE.1, WINDOW_SIZE.0 * 2., WINDOW_SIZE.1 * 2.);
         let color = Color::new(0., 0., 0., self.opacity);
         let mesh = Mesh::new_rectangle(ctx, DrawMode::fill(), rectangle, color).unwrap();

@@ -20,7 +20,7 @@ pub enum OnClickEvent {
   ActOnTarget((usize, usize), ActionParameters),
   MutateMenu(for<'r, 's> fn(&'r mut MenuScreen, &'s mut Party) -> GameResult<()>),
   Transition(GameMode),
-  MenuTransition(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>) -> MenuScreen),
+  MenuTransition(for<'r, 's, 't0, 't1> fn(&'r mut Context, &'s mut GameMode, &'t0 mut Party, &'t1 Vec<Vec<Enemy>>, (usize, usize)) -> MenuScreen, (usize, usize)),
   UseItemInMenu(
     for<'r, 's, 't0, 't1, 't2> fn(
       &'r mut Context,
@@ -48,7 +48,7 @@ impl Clone for OnClickEvent {
       OnClickEvent::ActOnTarget(position, action_parameters)          => OnClickEvent::ActOnTarget(*position, action_parameters.clone()),
       OnClickEvent::MutateMenu(mutation)                              => OnClickEvent::MutateMenu(*mutation),
       OnClickEvent::Transition(new_mode)                              => OnClickEvent::Transition(new_mode.clone()),
-      OnClickEvent::MenuTransition(new_menu)                          => OnClickEvent::MenuTransition(*new_menu),
+      OnClickEvent::MenuTransition(new_menu, cursor_start)            => OnClickEvent::MenuTransition(*new_menu, *cursor_start),
       OnClickEvent::UseItemInMenu(new_menu, targets, item_cursor_pos) => OnClickEvent::UseItemInMenu(*new_menu, targets.to_vec(), *item_cursor_pos),
       OnClickEvent::BattleAction(action)                              => OnClickEvent::BattleAction(*action)
     }

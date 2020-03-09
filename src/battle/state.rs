@@ -27,6 +27,7 @@ pub struct BattleState {
   pub turn_active: bool,
   poisoned: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
   sleeping: i8, // effected for x turns, negative means immunity, 128 and -127 means effect for eternity
+  pub back_row: bool,
   pub common_steal: Option<InventoryItem>,
   pub rare_steal: Option<InventoryItem>,
   pub character_info: Option<CharacterInfo>,
@@ -45,10 +46,11 @@ impl BattleState {
     resistance: u16,
     agility: u8,
     experience: u32,
-    common_steal: Option<InventoryItem>,
-    rare_steal: Option<InventoryItem>,
     poisoned: i8,
     sleeping: i8,
+    back_row: bool,
+    common_steal: Option<InventoryItem>,
+    rare_steal: Option<InventoryItem>,
     character_info: Option<CharacterInfo>
   ) -> BattleState {
     BattleState {
@@ -69,6 +71,7 @@ impl BattleState {
       turn_active: false,
       poisoned,
       sleeping,
+      back_row,
       common_steal,
       rare_steal,
       character_info,

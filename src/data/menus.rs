@@ -12,27 +12,32 @@ pub fn none_menu(ctx: &mut Context) -> MenuScreen {
   MenuScreen::new(ctx, false, Vec::new(), vec![Vec::new()], Vec::new(), (0, 0), MenuMovement::Grid, OnClickEvent::None)
 }
 
-pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
+pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
   let submenu_selection = MenuContainer::new(ctx, 10. , 10., 250., 300.);
   let character_info    = MenuContainer::new(ctx, 275., 10., 795., 700.);
-  fn to_item_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>) -> MenuScreen {
-    item_menu(ctx, mode, party, enemies, (0, 0))
+  fn to_item_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+    item_menu(ctx, mode, party, enemies, cursor_start)
   }
-  let item    = text!(ctx, "Item"   , 55., 60. , OnClickEvent::MenuTransition(to_item_menu));
+  fn to_row_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+    row_change_menu(ctx, mode, party, enemies, cursor_start)
+  }
+  let item    = text!(ctx, "Item"   , 55., 60. , OnClickEvent::MenuTransition(to_item_menu, (0, 0)));
   let ability = text!(ctx, "Ability", 55., 100., OnClickEvent::None);
   let equip   = text!(ctx, "Equip"  , 55., 140., OnClickEvent::None);
-  let config  = text!(ctx, "Config" , 55., 180., OnClickEvent::None);
+  let row     = text!(ctx, "Row"    , 55., 180., OnClickEvent::ToMenuScreen(to_row_menu, (0, 0)));
+  let config  = text!(ctx, "Config" , 55., 220., OnClickEvent::None);
   let mut unselectable_items = Vec::new();
   fn push_party_memeber_to_unselectables(ctx: &mut Context, vector: &mut Vec<MenuItem>, character: &Character) {
     if character.name.len() > 0 {
-      vector.push(MenuItem::new(ctx, character.avatar_spritefile.to_owned(), "".to_owned(), (320., 52. + (character.state.id - 1) as f32 * 162.), 128., OnClickEvent::None));
-      vector.push(MenuItem::new(ctx, "".to_owned(), format!("Lvl {}", character.state.level), (460., 60. + (character.state.id - 1) as f32 * 162.), 24., OnClickEvent::None));
-      vector.push(MenuItem::new(ctx, "".to_owned(), character.name.to_owned(), (640., 60. + (character.state.id - 1) as f32 * 162.), 24., OnClickEvent::None));
+      let offset_by_id = (character.state.id - 1) as f32 * 162.;
+      vector.push(MenuItem::new(ctx, character.avatar_spritefile.to_owned(), "".to_owned(), (360. + character.x_offset, 52. + offset_by_id), 128., OnClickEvent::None));
+      vector.push(MenuItem::new(ctx, "".to_owned(), format!("Lvl {}", character.state.level), (500., 60. + offset_by_id), 24., OnClickEvent::None));
+      vector.push(MenuItem::new(ctx, "".to_owned(), character.name.to_owned(), (680., 60. + offset_by_id), 24., OnClickEvent::None));
       vector.push(MenuItem::new(
         ctx,
         "".to_owned(),
         format!("{}/", character.state.hp),
-        (460. + (5 - format!("{}/", character.state.hp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        (500. + (5 - format!("{}/", character.state.hp).len()) as f32 * 24., 100. + offset_by_id),
         24.,
         OnClickEvent::None
       ));
@@ -40,24 +45,24 @@ pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
         ctx,
         "".to_owned(),
         format!("{}/", character.state.mp),
-        (796. + (4 - format!("{}/", character.state.mp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        (822. + (4 - format!("{}/", character.state.mp).len()) as f32 * 24., 100. + offset_by_id),
         24.,
         OnClickEvent::None
       ));
       vector.push(MenuItem::new(
         ctx,
         "".to_owned(),
-        format!("{} Hp", character.state.hp),
-        (580. + (4 - format!("{}" , character.state.hp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        format!("{}Hp", character.state.hp),
+        (620. + (4 - format!("{}", character.state.hp).len()) as f32 * 24., 100. + offset_by_id),
         24.,
         OnClickEvent::None
       ));
       vector.push(MenuItem::new(
         ctx,
         "".to_owned(),
-        format!("{} Mp",
+        format!("{}Mp",
         character.state.mp),
-        (892. + (3 - format!("{}" ,character.state.mp).len()) as f32 * 24., 100. + (character.state.id - 1) as f32 * 162.),
+        (918. + (3 - format!("{}", character.state.mp).len()) as f32 * 24., 100. + offset_by_id),
         24.,
         OnClickEvent::None
       ));
@@ -72,10 +77,10 @@ pub fn main_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
     true,
     vec![submenu_selection, character_info],
     vec![
-      vec![item, ability, equip, config]
+      vec![item, ability, equip, row, config]
     ],
     unselectable_items,
-    (0, 0),
+    cursor_start,
     MenuMovement::RowOfColumns,
     OnClickEvent::Transition(GameMode::Map)
   )
@@ -130,7 +135,114 @@ pub fn item_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _en
     unselectable_items,
     cursor_start,
     MenuMovement::Grid,
-    OnClickEvent::MenuTransition(main_menu)
+    OnClickEvent::MenuTransition(main_menu, (0, 0))
+  )
+}
+
+pub fn row_change_menu(ctx: &mut Context, _mode: &mut GameMode, party: &mut Party, _enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+  let submenu_selection = MenuContainer::new(ctx, 10. , 10., 250., 300.);
+  let character_info    = MenuContainer::new(ctx, 275., 10., 795., 700.);
+  fn to_main_menu(ctx: &mut Context, mode: &mut GameMode, party: &mut Party, enemies: &Vec<Vec<Enemy>>, cursor_start: (usize, usize)) -> MenuScreen {
+    main_menu(ctx, mode, party, enemies, cursor_start)
+  }
+  let mut selectable_items = Vec::new();
+  let mut unselectable_items = Vec::new();
+  unselectable_items.push(text!(ctx, "Item"   , 55., 60. , OnClickEvent::None));
+  unselectable_items.push(text!(ctx, "Ability", 55., 100., OnClickEvent::None));
+  unselectable_items.push(text!(ctx, "Equip"  , 55., 140., OnClickEvent::None));
+  unselectable_items.push(text!(ctx, "Row"    , 55., 180., OnClickEvent::None));
+  unselectable_items.push(text!(ctx, "Config" , 55., 220., OnClickEvent::None));
+  fn push_party_memeber_to_menu_items(ctx: &mut Context, selectables: &mut Vec<MenuItem>, unselectables: &mut Vec<MenuItem>, character: &Character) {
+    fn toggle_row(menu: &mut MenuScreen, party: &mut Party) -> GameResult<()> {
+      let mut characters_in_party = Vec::new();
+      if party.first .name.len() > 0 {characters_in_party.push(0)}
+      if party.second.name.len() > 0 {characters_in_party.push(1)}
+      if party.third .name.len() > 0 {characters_in_party.push(2)}
+      if party.fourth.name.len() > 0 {characters_in_party.push(3)}
+      let selected_index = match menu.cursor_pos.1 {
+        0 => characters_in_party[0],
+        1 => characters_in_party[1],
+        2 => characters_in_party[2],
+        _ => characters_in_party[3]
+      };
+      let selected_character = match selected_index {
+        0 => &mut party.first,
+        1 => &mut party.second,
+        2 => &mut party.third,
+        _ => &mut party.fourth
+      };
+      if selected_character.state.back_row {
+        selected_character.state.back_row = false;
+        selected_character.x_offset += 50.;
+        menu.selectable_items[0][selected_index].screen_pos.0 += 50.;
+      } else {
+        selected_character.state.back_row = true;
+        selected_character.x_offset -= 50.;
+        menu.selectable_items[0][selected_index].screen_pos.0 -= 50.;
+      }
+      menu.mutation = MenuMutation::None;
+      Ok(())
+    }
+    if character.name.len() > 0 {
+      let offset_by_id = (character.state.id - 1) as f32 * 162.;
+      selectables.push(MenuItem::new(
+        ctx,
+        character.avatar_spritefile.to_owned(),
+        "".to_owned(),
+        (360. + character.x_offset, 52. + offset_by_id),
+        128.,
+        OnClickEvent::MutateMenu(toggle_row)
+      ));
+      unselectables.push(MenuItem::new(ctx, "".to_owned(), format!("Lvl {}", character.state.level), (500., 60. + offset_by_id), 24., OnClickEvent::None));
+      unselectables.push(MenuItem::new(ctx, "".to_owned(), character.name.to_owned(), (680., 60. + offset_by_id), 24., OnClickEvent::None));
+      unselectables.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}/", character.state.hp),
+        (500. + (5 - format!("{}/", character.state.hp).len()) as f32 * 24., 100. + offset_by_id),
+        24.,
+        OnClickEvent::None
+      ));
+      unselectables.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}/", character.state.mp),
+        (822. + (4 - format!("{}/", character.state.mp).len()) as f32 * 24., 100. + offset_by_id),
+        24.,
+        OnClickEvent::None
+      ));
+      unselectables.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}Hp", character.state.hp),
+        (620. + (4 - format!("{}", character.state.hp).len()) as f32 * 24., 100. + offset_by_id),
+        24.,
+        OnClickEvent::None
+      ));
+      unselectables.push(MenuItem::new(
+        ctx,
+        "".to_owned(),
+        format!("{}Mp",
+        character.state.mp),
+        (918. + (3 - format!("{}", character.state.mp).len()) as f32 * 24., 100. + offset_by_id),
+        24.,
+        OnClickEvent::None
+      ));
+    }
+  }
+  push_party_memeber_to_menu_items(ctx, &mut selectable_items, &mut unselectable_items, &party.first);
+  push_party_memeber_to_menu_items(ctx, &mut selectable_items, &mut unselectable_items, &party.second);
+  push_party_memeber_to_menu_items(ctx, &mut selectable_items, &mut unselectable_items, &party.third);
+  push_party_memeber_to_menu_items(ctx, &mut selectable_items, &mut unselectable_items, &party.fourth);
+  MenuScreen::new(
+    ctx,
+    true,
+    vec![submenu_selection, character_info],
+    vec![selectable_items],
+    unselectable_items,
+    cursor_start,
+    MenuMovement::RowOfColumns,
+    OnClickEvent::ToMenuScreen(to_main_menu, (0, 3))
   )
 }
 
@@ -230,6 +342,24 @@ pub fn battle_target_selection(
 pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) -> MenuScreen {
   fn start_exp_count(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
     fn count_experience(menu: &mut MenuScreen, party: &mut Party) -> GameResult<()> {
+      fn finish_exp_count(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
+        fn end_exp_cound(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
+          let exp_left = menu.unselectable_items[1].text.parse::<u32>().unwrap();
+          if exp_left > 0 {
+            menu.unselectable_items[1].text = format!("{}", 0);
+            menu.unselectable_items[3].text = format!("{}", menu.unselectable_items[3].text.parse::<u32>().unwrap() + exp_left);
+            menu.unselectable_items[5].text = format!("{}", menu.unselectable_items[5].text.parse::<u32>().unwrap() + exp_left);
+            menu.unselectable_items[7].text = format!("{}", menu.unselectable_items[7].text.parse::<u32>().unwrap() + exp_left);
+            menu.unselectable_items[9].text = format!("{}", menu.unselectable_items[9].text.parse::<u32>().unwrap() + exp_left);
+          } else {
+            menu.mutation = MenuMutation::None;
+          }
+          menu.selectable_items[0][0].on_click = OnClickEvent::Transition(GameMode::Map);
+          Ok(())
+        }
+        menu.mutation = MenuMutation::DefaultMutation(end_exp_cound);
+        Ok(())
+      }
       let exp_left = menu.unselectable_items[1].text.parse::<u32>().unwrap();
       if exp_left > 0 {
         menu.unselectable_items[1].text = format!("{}", exp_left - party.get_alive_size());
@@ -252,22 +382,6 @@ pub fn battle_won(ctx: &mut Context, party: &mut Party, experience: &mut u32) ->
       Ok(())
     }
     menu.mutation = MenuMutation::DefaultMutation(count_experience);
-    Ok(())
-  }
-  fn finish_exp_count(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
-    fn end_exp_cound(menu: &mut MenuScreen, _party: &mut Party) -> GameResult<()> {
-      let exp_left = menu.unselectable_items[1].text.parse::<u32>().unwrap();
-      if exp_left > 0 {
-        menu.unselectable_items[1].text = format!("{}", 0);
-        menu.unselectable_items[3].text = format!("{}", menu.unselectable_items[3].text.parse::<u32>().unwrap() + exp_left);
-        menu.unselectable_items[5].text = format!("{}", menu.unselectable_items[5].text.parse::<u32>().unwrap() + exp_left);
-        menu.unselectable_items[7].text = format!("{}", menu.unselectable_items[7].text.parse::<u32>().unwrap() + exp_left);
-        menu.unselectable_items[9].text = format!("{}", menu.unselectable_items[9].text.parse::<u32>().unwrap() + exp_left);
-      }
-      menu.selectable_items[0][0].on_click = OnClickEvent::Transition(GameMode::Map);
-      Ok(())
-    }
-    menu.mutation = MenuMutation::DefaultMutation(end_exp_cound);
     Ok(())
   }
   let experience_container   = MenuContainer::new(ctx, 50. , 10. , 500. , 100.);

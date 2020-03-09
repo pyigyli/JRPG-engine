@@ -66,6 +66,7 @@ impl Character {
     magic: u16,
     resistance: u16,
     agility: u8,
+    back_row: bool,
     attack_ability: (String, OnClickEvent),
     primary_ability: (String, OnClickEvent),
     secondary_ability: (String, OnClickEvent)
@@ -73,6 +74,10 @@ impl Character {
     let image = Image::new(ctx, spritefile).unwrap();
     let batch = spritebatch::SpriteBatch::new(image);
     let character_info = CharacterInfo::new(ctx, id, &name, hp, mp);
+    let mut x_offset = 0.;
+    if back_row {
+      x_offset -= 50.;
+    }
     Character {
       spritebatch: batch,
       avatar_spritefile,
@@ -80,9 +85,9 @@ impl Character {
       animation: (Animation::EndTurn, 0, 0),
       sprite: Sprite::StandRight,
       frame: 0.,
-      x_offset: 0.,
+      x_offset,
       name,
-      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0, None, None, 0, 0, Some(character_info)),
+      state: BattleState::new(id, level, hp, mp, attack, defence, magic, resistance, agility, 0, 0, 0, back_row, None, None, Some(character_info)),
       attack_ability,
       primary_ability,
       secondary_ability
@@ -229,6 +234,17 @@ impl Character {
       draw(ctx, &self.spritebatch, param)?;
       self.spritebatch.clear();
       self.state.draw(ctx)?;
+    }
+    Ok(())
+  }
+
+  pub fn toggle_back_row(&mut self) -> GameResult<()> {
+    if self.state.back_row {
+      self.state.back_row = false;
+      self.x_offset += 50.;
+    } else {
+      self.state.back_row = true;
+      self.x_offset -= 50.;
     }
     Ok(())
   }

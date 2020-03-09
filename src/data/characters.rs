@@ -14,7 +14,7 @@ pub fn none_character(ctx: &mut Context, id: u8) -> Character {
   let attack            = (" ".to_owned(), OnClickEvent::None);
   let primary_ability   = (" ".to_owned(), OnClickEvent::None);
   let secondary_ability = (" ".to_owned(), OnClickEvent::None);
-  Character::new(ctx, id, "/empty.png".to_owned(), "/empty.png".to_owned(), "".to_owned(), 0, 0, 0, 0, 0, 0, 0, 0, attack, primary_ability, secondary_ability)
+  Character::new(ctx, id, "/empty.png".to_owned(), "/empty.png".to_owned(), "".to_owned(), 0, 0, 0, 0, 0, 0, 0, 0, false, attack, primary_ability, secondary_ability)
 }
 
 pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
@@ -113,6 +113,7 @@ pub fn darrel_deen(ctx: &mut Context, id: u8) -> Character {
     3, // MAG
     4, // RES
     5, // AGI
+    false,
     attack,
     primary_ability,
     secondary_ability
@@ -141,6 +142,7 @@ pub fn nurse_seraphine(ctx: &mut Context, id: u8) -> Character {
     5, // MAG
     3, // RES
     4, // AGI
+    true,
     attack,
     primary_ability,
     secondary_ability
