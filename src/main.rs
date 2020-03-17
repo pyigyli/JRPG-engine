@@ -6,9 +6,11 @@ use ggez::timer::sleep;
 use std::time::Duration;
 use std::path;
 mod globals;
+use globals::WINDOW_SIZE;
 mod menu;
 use menu::MenuScreen;
 mod tilemap;
+use tilemap::Tilemap;
 mod data;
 mod battle;
 use battle::Battle;
@@ -35,7 +37,7 @@ impl PartialEq for GameMode {
 struct GameState {
   mode: GameMode,
   menu: MenuScreen,
-  map: tilemap::Tilemap,
+  map: Tilemap,
   party: Party,
   battle: Battle,
   battle_menu: MenuScreen,
@@ -97,8 +99,8 @@ fn main() {
       srgb: true
     })
     .window_mode(WindowMode {
-      width: globals::WINDOW_SIZE.0,
-      height: globals::WINDOW_SIZE.1,
+      width: WINDOW_SIZE.0,
+      height: WINDOW_SIZE.1,
       maximized: false,
       fullscreen_type: FullscreenType::Windowed,
       borderless: false,

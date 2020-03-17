@@ -238,17 +238,6 @@ impl Character {
     Ok(())
   }
 
-  pub fn toggle_back_row(&mut self) -> GameResult<()> {
-    if self.state.back_row {
-      self.state.back_row = false;
-      self.x_offset += 50.;
-    } else {
-      self.state.back_row = true;
-      self.x_offset -= 50.;
-    }
-    Ok(())
-  }
-
   pub fn get_avatar(&self) -> String {
     self.avatar_spritefile.to_owned()
   }

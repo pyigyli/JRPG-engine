@@ -1,7 +1,7 @@
 use ggez::graphics::{spritebatch, Image, DrawParam, Rect, draw};
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
-use crate::globals::{WINDOW_SIZE, GRID_SIZE};
+use crate::globals::WINDOW_SIZE;
 pub mod tile;
 pub mod player;
 use crate::GameMode;
@@ -68,7 +68,7 @@ impl Tilemap {
       for tile in row.iter() {
         let p = DrawParam::new()
           .src(Rect::new(tile.spritesheet_pos.0 * 0.25, tile.spritesheet_pos.1 * 0.333333333333333, 0.25, 0.333333333333333))
-          .dest(Point2::new((i - self.player.position.0) * GRID_SIZE, (j - self.player.position.1) * GRID_SIZE));
+          .dest(Point2::new((i - self.player.position.0) * 64., (j - self.player.position.1) * 64.));
         self.spritebatch.add(p);
         i += 1.;
       }

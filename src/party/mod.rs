@@ -30,8 +30,8 @@ impl Party {
     Party {
       first:  characters::darrel_deen(ctx, 1),
       second: characters::nurse_seraphine(ctx, 2),
-      third:  characters::darrel_deen(ctx, 3),
-      fourth: characters::nurse_seraphine(ctx, 4),
+      third:  characters::none_character(ctx, 3),
+      fourth: characters::none_character(ctx, 4),
       inventory: vec![ // Must have value 0 or more for every item
         InventoryElement::Item(InventoryItem::new(ItemVariant::Potion), 2),
         InventoryElement::Item(InventoryItem::new(ItemVariant::Ether) , 1)
